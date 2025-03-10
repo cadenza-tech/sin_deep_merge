@@ -91,5 +91,11 @@ class TestDeepMerge < Minitest::Test
     expected = hash1.as_deep_merge(hash2) { |_key, old_val, new_val| old_val + new_val }
 
     assert_equal(expected, hash1.deep_merge(hash2) { |_key, old_val, new_val| old_val + new_val })
+    assert_equal(
+      expected,
+      hash1.deep_merge(hash2) do |_key, old_val, new_val|
+        old_val + new_val
+      end
+    )
   end
 end

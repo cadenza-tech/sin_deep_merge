@@ -94,5 +94,15 @@ class TestDeepMergeBang < Minitest::Test
 
     assert_equal(expected, hash1.deep_merge!(hash2) { |_key, old_val, new_val| old_val + new_val })
     assert_equal(hash1_dup, hash1)
+
+    hash1 = { a: 1, b: 2, c: 3 }
+
+    assert_equal(
+      expected,
+      hash1.deep_merge!(hash2) do |_key, old_val, new_val|
+        old_val + new_val
+      end
+    )
+    assert_equal(hash1_dup, hash1)
   end
 end
