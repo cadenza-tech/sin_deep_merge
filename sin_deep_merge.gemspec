@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
     'rubygems_mfa_required' => 'true'
   }
 
-  spec.required_ruby_version = '>= 0'
+  spec.required_ruby_version = '>= 2.3.0'
 
   gemspec = File.basename(__FILE__)
   spec.files = IO.popen(%w[git ls-files]) do |ls|
