@@ -38,35 +38,31 @@ SinDeepMerge's Hash#deep_merge is compatible with ActiveSupport's Hash#deep_merg
 ```ruby
 require 'sin_deep_merge'
 
+hash1 = { a: 1, b: '2', c: :three, d: true, e: nil }
+hash2 = { b: :two, c: nil, d: false, e: 0, f: 'f' }
+hash1.deep_merge(hash2) # => { a: 1, b: :two, c: nil, d: false, e: 0, f: 'f' }
+
+hash1 = { a: [1, 2], b: [3, 4] }
+hash2 = { a: [3, 4], b: 5 }
+hash1.deep_merge(hash2) # => { a: [3, 4], b: 5 }
+
+hash1 = { a: { b: 1, c: 2 }, b: { c: 3 } }
+hash2 = { a: { c: 3, d: 4 }, b: 5 }
+hash1.deep_merge(hash2) # => { a: { b: 1, c: 3, d: 4 }, b: 5 }
+
 hash1 = { a: 1, b: 2 }
-hash2 = { c: 3, d: 4 }
-hash1.deep_merge(hash2) # => { a: 1, b: 2, c: 3, d: 4 }
+hash2 = { b: 3, c: 4 }
+hash1.deep_merge(hash2) { |_key, old_val, new_val| old_val + new_val } # => { a: 1, b: 5, c: 4 }
 
-hash1 = { a: { b: 1 } }
-hash2 = { a: 2 }
-hash1.deep_merge(hash2) # => { a: 2 }
-
-hash1 = { a: [1, 2] }
-hash2 = { a: [3, 4] }
-hash1.deep_merge(hash2) # => { a: [3, 4] }
-
-hash1 = { a: { b: { c: 1, d: 2 } } }
-hash2 = { a: { b: { d: 3, e: 4 } } }
-hash1.deep_merge(hash2) # => { a: { b: { c: 1, d: 3, e: 4 } } }
-
-hash1 = { a: 1, b: 2, c: 3 }
-hash2 = { b: 3, c: 4, d: 5 }
-hash1.deep_merge(hash2) { |_key, old_val, new_val| old_val + new_val } # => { a: 1, b: 5, c: 7, d: 5 }
-
-hash1 = { a: [1, 2], b: true }
-hash2 = { a: [3, 4], b: false }
+hash1 = { a: [1, 2], b: 3 }
+hash2 = { a: [3, 4], b: 5 }
 hash1.deep_merge(hash2) do |_key, old_val, new_val|
   if old_val.is_a?(Array) && new_val.is_a?(Array)
     old_val + new_val
   else
     new_val
   end
-end # => { a: [1, 2, 3, 4], b: false }
+end # => { a: [1, 2, 3, 4], b: 5 }
 ```
 
 ### Hash#deep_merge!
