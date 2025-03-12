@@ -5,8 +5,8 @@ require_relative 'lib/sin_deep_merge/version'
 Gem::Specification.new do |spec|
   spec.name = 'sin_deep_merge'
   spec.version = SinDeepMerge::VERSION
-  spec.description = 'Ruby extension library for up to 2x faster deep merging of Hash objects than ActiveSupport.'
-  spec.summary = 'Ruby extension library for up to 2x faster deep merging of Hash objects than ActiveSupport.'
+  spec.description = 'Merge deeply nested hashes faster than DeepMerge and ActiveSupport'
+  spec.summary = 'Merge deeply nested hashes faster than DeepMerge and ActiveSupport'
   spec.authors = ['Masahiro']
   spec.email = ['watanabe@cadenza-tech.com']
   spec.license = 'MIT'
