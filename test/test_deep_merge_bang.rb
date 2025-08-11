@@ -85,6 +85,17 @@ class TestDeepMergeBang < Minitest::Test
     assert_equal(expected, hash1)
   end
 
+  def test_with_lambda
+    hash1 = { a: 1, b: 2 }
+    hash2 = { b: 3, c: 4 }
+    merge_lambda = lambda { |_key, old_val, new_val| old_val + new_val } # rubocop:disable Style/Lambda
+
+    expected = { a: 1, b: 5, c: 4 }
+
+    assert_equal(expected, hash1.deep_merge!(hash2, &merge_lambda))
+    assert_equal(expected, hash1)
+  end
+
   def test_compatibility
     hash1 = { a: 1, b: 2, c: [3, 4], d: { e: 5 }, f: { g: { h: 6, i: 7 } } }
     hash1_dup = Marshal.load(Marshal.dump(hash1))
@@ -126,6 +137,18 @@ class TestDeepMergeBang < Minitest::Test
     expected = hash1_dup.as_deep_merge!(hash2, &merge_proc)
 
     assert_equal(expected, hash1.deep_merge!(hash2, &merge_proc))
+    assert_equal(hash1_dup, hash1)
+  end
+
+  def test_compatibility_with_lambda
+    hash1 = { a: 1, b: 2 }
+    hash1_dup = Marshal.load(Marshal.dump(hash1))
+    hash2 = { b: 3, c: 4 }
+    merge_lambda = lambda { |_key, old_val, new_val| old_val + new_val } # rubocop:disable Style/Lambda
+
+    expected = hash1_dup.as_deep_merge!(hash2, &merge_lambda)
+
+    assert_equal(expected, hash1.deep_merge!(hash2, &merge_lambda))
     assert_equal(hash1_dup, hash1)
   end
 end
