@@ -6,6 +6,8 @@ on:
       - 'Gemfile'
       - 'Rakefile'
       - 'sin_deep_merge.gemspec'
+      - 'ext/**/*'
+      - 'lib/**/*'
       - '**/*.rb'
   schedule:
     - cron: '0 12 * * 5'
