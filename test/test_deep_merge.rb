@@ -74,6 +74,16 @@ class TestDeepMerge < Minitest::Test
     assert_equal(expected, hash1.deep_merge(hash2, &merge_proc))
   end
 
+  def test_with_lambda
+    hash1 = { a: 1, b: 2 }
+    hash2 = { b: 3, c: 4 }
+    merge_lambda = lambda { |_key, old_val, new_val| old_val + new_val } # rubocop:disable Style/Lambda
+
+    expected = { a: 1, b: 5, c: 4 }
+
+    assert_equal(expected, hash1.deep_merge(hash2, &merge_lambda))
+  end
+
   def test_non_destructive
     hash1 = { a: { b: 1 } }
     hash2 = { a: { c: 2 } }
@@ -117,5 +127,15 @@ class TestDeepMerge < Minitest::Test
     expected = hash1.as_deep_merge(hash2, &merge_proc)
 
     assert_equal(expected, hash1.deep_merge(hash2, &merge_proc))
+  end
+
+  def test_compatibility_with_lambda
+    hash1 = { a: 1, b: 2 }
+    hash2 = { b: 3, c: 4 }
+    merge_lambda = lambda { |_key, old_val, new_val| old_val + new_val } # rubocop:disable Style/Lambda
+
+    expected = hash1.as_deep_merge(hash2, &merge_lambda)
+
+    assert_equal(expected, hash1.deep_merge(hash2, &merge_lambda))
   end
 end
