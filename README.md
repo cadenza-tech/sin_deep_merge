@@ -10,6 +10,8 @@ Merge deeply nested hashes faster than DeepMerge or ActiveSupport.
   - [Hash#deep\_merge!](#hashdeep_merge-1)
 - [Benchmark](#benchmark)
 - [Changelog](#changelog)
+- [Development](#development)
+  - [Building for JRuby](#building-for-jruby)
 - [Contributing](#contributing)
 - [License](#license)
 - [Code of Conduct](#code-of-conduct)
@@ -71,7 +73,7 @@ Hash#deep_merge! destructively updates self by merging new values directly into 
 
 ## Benchmark
 
-SinDeepMerge's Hash#deep_merge is about 1.5-1.7x faster than ActiveSupport's Hash#deep_merge and about 3.6-5.3x faster than DeepMerge's Hash#deep_merge.
+SinDeepMerge's Hash#deep_merge is about 1.6-2.0x faster than ActiveSupport's Hash#deep_merge and about 3.7-5.1x faster than DeepMerge's Hash#deep_merge.
 
 ```bash
 $ bundle exec rake benchmark
@@ -81,10 +83,10 @@ $ bundle exec rake benchmark
 +----------------------------+----------------------+-------------+
 | Name                       | Iteration Per Second | Speed Ratio |
 +----------------------------+----------------------+-------------+
-| SinDeepMerge - deep_merge  | 1899218.6            | -           |
-| Scratch - deep_merge       | 1289196.4            | 1.5x slower |
-| ActiveSupport - deep_merge | 1215659.6            | 1.6x slower |
-| DeepMerge - deep_merge     | 358813.8             | 5.3x slower |
+| SinDeepMerge - deep_merge  | 2099207.7            | -           |
+| Scratch - deep_merge       | 1421495.7            | 1.5x slower |
+| ActiveSupport - deep_merge | 1142153.4            | 1.8x slower |
+| DeepMerge - deep_merge     | 410411.8             | 5.1x slower |
 +----------------------------+----------------------+-------------+
 
 +-----------------------------------------------------------------+
@@ -92,10 +94,10 @@ $ bundle exec rake benchmark
 +----------------------------+----------------------+-------------+
 | Name                       | Iteration Per Second | Speed Ratio |
 +----------------------------+----------------------+-------------+
-| SinDeepMerge - deep_merge  | 1594873.2            | -           |
-| Scratch - deep_merge       | 1235536.5            | 1.3x slower |
-| ActiveSupport - deep_merge | 1062621.4            | 1.5x slower |
-| DeepMerge - deep_merge     | 356335.5             | 4.5x slower |
+| SinDeepMerge - deep_merge  | 1685871.7            | -           |
+| Scratch - deep_merge       | 1420244.0            | 1.2x slower |
+| ActiveSupport - deep_merge | 1066140.5            | 1.6x slower |
+| DeepMerge - deep_merge     | 408117.3             | 4.1x slower |
 +----------------------------+----------------------+-------------+
 
 +-----------------------------------------------------------------+
@@ -103,10 +105,10 @@ $ bundle exec rake benchmark
 +----------------------------+----------------------+-------------+
 | Name                       | Iteration Per Second | Speed Ratio |
 +----------------------------+----------------------+-------------+
-| SinDeepMerge - deep_merge  | 23017.8              | -           |
-| ActiveSupport - deep_merge | 14626.7              | 1.6x slower |
-| Scratch - deep_merge       | 14271.6              | 1.6x slower |
-| DeepMerge - deep_merge     | 6277.8               | 3.7x slower |
+| SinDeepMerge - deep_merge  | 27678.2              | -           |
+| Scratch - deep_merge       | 16520.2              | 1.7x slower |
+| ActiveSupport - deep_merge | 13823.1              | 2.0x slower |
+| DeepMerge - deep_merge     | 7164.1               | 3.9x slower |
 +----------------------------+----------------------+-------------+
 
 +-----------------------------------------------------------------+
@@ -114,10 +116,10 @@ $ bundle exec rake benchmark
 +----------------------------+----------------------+-------------+
 | Name                       | Iteration Per Second | Speed Ratio |
 +----------------------------+----------------------+-------------+
-| SinDeepMerge - deep_merge  | 22727.1              | -           |
-| Scratch - deep_merge       | 14154.0              | 1.6x slower |
-| ActiveSupport - deep_merge | 13661.2              | 1.7x slower |
-| DeepMerge - deep_merge     | 6279.9               | 3.6x slower |
+| SinDeepMerge - deep_merge  | 26772.9              | -           |
+| Scratch - deep_merge       | 16391.8              | 1.6x slower |
+| ActiveSupport - deep_merge | 13194.9              | 2.0x slower |
+| DeepMerge - deep_merge     | 7172.9               | 3.7x slower |
 +----------------------------+----------------------+-------------+
 ```
 
@@ -128,6 +130,50 @@ The benchmark was executed in the following environment:
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/cadenza-tech/sin_deep_merge/blob/main/CHANGELOG.md).
+
+## Development
+
+### Building for JRuby
+
+To build the Java extension for JRuby support, follow these steps:
+
+1. Start a JRuby Docker container:
+
+```bash
+docker run -it --rm -v "$(pwd):/app" -w /app jruby:9.3.4.0-jdk8 /bin/bash
+```
+
+2. Install necessary dependencies:
+
+```bash
+apt update
+apt upgrade
+apt install git
+```
+
+3. Compile the Java source:
+
+```bash
+cd ext/java
+javac -cp /opt/jruby/lib/jruby.jar sin_deep_merge/SinDeepMergeLibrary.java
+```
+
+4. Create the JAR file:
+
+```bash
+jar cvf ../../lib/sin_deep_merge/sin_deep_merge.jar sin_deep_merge/SinDeepMergeLibrary.class
+```
+
+5. Install dependencies and run linter, tests and benchmarks:
+
+```bash
+cd ../../
+gem install bundler
+bundle install
+bundle exec rake rubocop
+bundle exec rake test
+bundle exec rake benchmark
+```
 
 ## Contributing
 
