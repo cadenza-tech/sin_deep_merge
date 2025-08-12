@@ -8,8 +8,8 @@ class Hash
   alias_method :dm_deep_merge, :deep_merge
   alias_method :dm_deep_merge!, :deep_merge!
 
-  remove_method :deep_merge
-  remove_method :deep_merge!
+  undef_method :deep_merge
+  undef_method :deep_merge!
 end
 
 require 'sin_deep_merge'
