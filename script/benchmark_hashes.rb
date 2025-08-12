@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 BENCHMARKS = {
-  'Shallow Recursion': [{ a: 1, b: { a: 2 }, c: { a: 3, b: { a: 4 } } }, { b: { b: 5 }, c: { a: 6, b: { a: 7 } } }],
-  'Shallow Recursion With Block': [{ a: 1, b: { a: 2 }, c: { a: 3, b: { a: 4 } } }, { b: { b: 5 }, c: { a: 6, b: { a: 7 } } }, ->(_key, a, b) {
+  'Shallow Recursion' => [{ a: 1, b: { a: 2 }, c: { a: 3, b: { a: 4 } } }, { b: { b: 5 }, c: { a: 6, b: { a: 7 } } }],
+  'Shallow Recursion With Block' => [{ a: 1, b: { a: 2 }, c: { a: 3, b: { a: 4 } } }, { b: { b: 5 }, c: { a: 6, b: { a: 7 } } }, ->(_key, a, b) {
     a + b
   }],
-  'Deep Recursion': [
+  'Deep Recursion' => [
     {
       a: { b: { c: { d: { e: { f: { g: { h: { i: { j: { k: { l: { m: { n: { o: { p: { q: { r: { s: { t: { u: { v: { w: { x: { y: { z: 0 } } } } } } } } } } } } } } } } } } } } } } } } },
       b: { c: { d: { e: { f: { g: { h: { i: { j: { k: { l: { m: { n: { o: { p: { q: { r: { s: { t: { u: { v: { w: { x: { y: { z: 1 } } } } } } } } } } } } } } } } } } } } } } } },
@@ -63,7 +63,7 @@ BENCHMARKS = {
       z: 26
     }
   ],
-  'Deep Recursion With Block': [
+  'Deep Recursion With Block' => [
     {
       a: { b: { c: { d: { e: { f: { g: { h: { i: { j: { k: { l: { m: { n: { o: { p: { q: { r: { s: { t: { u: { v: { w: { x: { y: { z: 0 } } } } } } } } } } } } } } } } } } } } } } } } },
       b: { c: { d: { e: { f: { g: { h: { i: { j: { k: { l: { m: { n: { o: { p: { q: { r: { s: { t: { u: { v: { w: { x: { y: { z: 1 } } } } } } } } } } } } } } } } } } } } } } } },
