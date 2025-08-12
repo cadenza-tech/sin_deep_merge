@@ -73,59 +73,61 @@ Hash#deep_merge! destructively updates self by merging new values directly into 
 
 ## Benchmark
 
-SinDeepMerge's Hash#deep_merge is about 1.6-2.0x faster than ActiveSupport's Hash#deep_merge and about 3.7-5.1x faster than DeepMerge's Hash#deep_merge.
+SinDeepMerge's Hash#deep_merge is about 6.8-13.3x faster than DeepMerge's Hash#deep_merge and about 2.8-4.8x faster than ActiveSupport's Hash#deep_merge.
 
 ```bash
 $ bundle exec rake benchmark
 
-+-----------------------------------------------------------------+
-|              Benchmark Result (Shallow Recursion)               |
-+----------------------------+----------------------+-------------+
-| Name                       | Iteration Per Second | Speed Ratio |
-+----------------------------+----------------------+-------------+
-| SinDeepMerge - deep_merge  | 2099207.7            | -           |
-| Scratch - deep_merge       | 1421495.7            | 1.5x slower |
-| ActiveSupport - deep_merge | 1142153.4            | 1.8x slower |
-| DeepMerge - deep_merge     | 410411.8             | 5.1x slower |
-+----------------------------+----------------------+-------------+
++------------------------------------------------------------------+
+|               Benchmark Result (Shallow Recursion)               |
++----------------------------+----------------------+--------------+
+| Name                       | Iteration Per Second | Speed Ratio  |
++----------------------------+----------------------+--------------+
+| SinDeepMerge - deep_merge  | 4982971.6            | Fastest      |
+| Scratch - deep_merge       | 1335135.4            | 3.7x slower  |
+| ActiveSupport - deep_merge | 1134880.6            | 4.4x slower  |
+| DeepMerge - deep_merge     | 374951.9             | 13.3x slower |
++----------------------------+----------------------+--------------+
 
-+-----------------------------------------------------------------+
-|         Benchmark Result (Shallow Recursion With Block)         |
-+----------------------------+----------------------+-------------+
-| Name                       | Iteration Per Second | Speed Ratio |
-+----------------------------+----------------------+-------------+
-| SinDeepMerge - deep_merge  | 1685871.7            | -           |
-| Scratch - deep_merge       | 1420244.0            | 1.2x slower |
-| ActiveSupport - deep_merge | 1066140.5            | 1.6x slower |
-| DeepMerge - deep_merge     | 408117.3             | 4.1x slower |
-+----------------------------+----------------------+-------------+
++------------------------------------------------------------------------------------------------+
+|                        Benchmark Result (Shallow Recursion With Block)                         |
++-----------------------------------------------------------+----------------------+-------------+
+| Name                                                      | Iteration Per Second | Speed Ratio |
++-----------------------------------------------------------+----------------------+-------------+
+| SinDeepMerge - deep_merge (Shallow Recursion With Block)  | 2737026.1            | Fastest     |
+| Scratch - deep_merge (Shallow Recursion With Block)       | 1345806.3            | 2.0x slower |
+| ActiveSupport - deep_merge (Shallow Recursion With Block) | 992495.4             | 2.8x slower |
+| DeepMerge - deep_merge (Shallow Recursion With Block)     | 401724.1             | 6.8x slower |
++-----------------------------------------------------------+----------------------+-------------+
 
 +-----------------------------------------------------------------+
 |                Benchmark Result (Deep Recursion)                |
 +----------------------------+----------------------+-------------+
 | Name                       | Iteration Per Second | Speed Ratio |
 +----------------------------+----------------------+-------------+
-| SinDeepMerge - deep_merge  | 27678.2              | -           |
-| Scratch - deep_merge       | 16520.2              | 1.7x slower |
-| ActiveSupport - deep_merge | 13823.1              | 2.0x slower |
-| DeepMerge - deep_merge     | 7164.1               | 3.9x slower |
+| SinDeepMerge - deep_merge  | 63141.3              | Fastest     |
+| Scratch - deep_merge       | 16112.6              | 3.9x slower |
+| ActiveSupport - deep_merge | 13183.6              | 4.8x slower |
+| DeepMerge - deep_merge     | 6990.1               | 9.0x slower |
 +----------------------------+----------------------+-------------+
 
-+-----------------------------------------------------------------+
-|          Benchmark Result (Deep Recursion With Block)           |
-+----------------------------+----------------------+-------------+
-| Name                       | Iteration Per Second | Speed Ratio |
-+----------------------------+----------------------+-------------+
-| SinDeepMerge - deep_merge  | 26772.9              | -           |
-| Scratch - deep_merge       | 16391.8              | 1.6x slower |
-| ActiveSupport - deep_merge | 13194.9              | 2.0x slower |
-| DeepMerge - deep_merge     | 7172.9               | 3.7x slower |
-+----------------------------+----------------------+-------------+
++---------------------------------------------------------------------------------------------+
+|                        Benchmark Result (Deep Recursion With Block)                         |
++--------------------------------------------------------+----------------------+-------------+
+| Name                                                   | Iteration Per Second | Speed Ratio |
++--------------------------------------------------------+----------------------+-------------+
+| SinDeepMerge - deep_merge (Deep Recursion With Block)  | 58786.4              | Fastest     |
+| Scratch - deep_merge (Deep Recursion With Block)       | 16198.6              | 3.6x slower |
+| ActiveSupport - deep_merge (Deep Recursion With Block) | 12145.4              | 4.8x slower |
+| DeepMerge - deep_merge (Deep Recursion With Block)     | 7011.6               | 8.4x slower |
++--------------------------------------------------------+----------------------+-------------+
 ```
 
 The benchmark was executed in the following environment:
 
-`ruby 3.4.2 (2025-02-15 revision d2930f8e7a) +YJIT +PRISM [arm64-darwin24]`
+- Ruby 3.4.5 (2025-07-16 revision 20cda200d3) +YJIT +PRISM [arm64-darwin24]
+- DeepMerge 1.2.2
+- ActiveSupport 8.0.2
 
 ## Changelog
 
