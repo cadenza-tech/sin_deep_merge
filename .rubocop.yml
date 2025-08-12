@@ -26,21 +26,18 @@ Layout/LineLength:
   Max: 150
   AllowURI: false
   Exclude:
-    - 'script/benchmarks.rb'
+    - 'script/benchmark_hashes.rb'
 
 # https://docs.rubocop.org/rubocop/cops_metrics.html#metricsabcsize
 Metrics/AbcSize:
   Enabled: true
   Max: 25
-  Exclude:
-    - 'script/sin_deep_merge_benchmark.rb'
 
 # https://docs.rubocop.org/rubocop/cops_metrics.html#metricsblocklength
 Metrics/BlockLength:
   Enabled: true
   Max: 30
   Exclude:
-    - 'script/sin_deep_merge_benchmark.rb'
     - 'sin_deep_merge.gemspec'
 
 # https://docs.rubocop.org/rubocop/cops_metrics.html#metricsclasslength
@@ -49,19 +46,11 @@ Metrics/ClassLength:
   CountComments: false
   Max: 200
 
-# https://docs.rubocop.org/rubocop/cops_metrics.html#metricscyclomaticcomplexity
-Metrics/CyclomaticComplexity:
-  Enabled: true
-  Exclude:
-    - 'script/sin_deep_merge_benchmark.rb'
-
 # https://docs.rubocop.org/rubocop/cops_metrics.html#metricsmethodlength
 Metrics/MethodLength:
   Enabled: true
   CountComments: false
   Max: 25
-  Exclude:
-    - 'script/sin_deep_merge_benchmark.rb'
 
 # https://docs.rubocop.org/rubocop/cops_metrics.html#metricsmodulelength
 Metrics/ModuleLength:
@@ -73,12 +62,6 @@ Metrics/ParameterLists:
   Enabled: true
   Max: 5
   CountKeywordArgs: true
-
-# https://docs.rubocop.org/rubocop/cops_metrics.html#metricsperceivedcomplexity
-Metrics/PerceivedComplexity:
-  Enabled: true
-  Exclude:
-    - 'script/sin_deep_merge_benchmark.rb'
 
 # https://docs.rubocop.org/rubocop/cops_naming.html#namingaccessormethodname
 Naming/AccessorMethodName:
