@@ -2,7 +2,7 @@
 
 ## [1.0.0] - 2025-8-11
 
-- New: Improve performance
+- Perf: Improve performance
 - Test: Update tests
 - Other: Update .gitignore
 - Other: Improve lint CI
