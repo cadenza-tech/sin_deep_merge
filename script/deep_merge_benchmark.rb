@@ -19,13 +19,13 @@ class DeepMergeBenchmark
   end
 
   def run
-    results = execute_benchmarks
+    results = run_benchmarks
     display_results(results)
   end
 
   private
 
-  def execute_benchmarks
+  def run_benchmarks
     results = {}
 
     BENCHMARKS.each do |name, hashes|
@@ -36,7 +36,8 @@ class DeepMergeBenchmark
       else
         report = run_benchmark_with_block(hashes[0], hashes[1], hashes[2], name)
       end
-      results[name] = extract_results(report)
+
+      results[name] = report.entries.map { |entry| [entry.label, entry.ips] }.to_h
     end
 
     results
@@ -44,8 +45,8 @@ class DeepMergeBenchmark
 
   def run_benchmark(hash1, hash2)
     Benchmark.ips do |x|
-      x.time = 1
-      x.warmup = 0.5
+      x.time = 5
+      x.warmup = 5
       x.quiet = true
 
       BENCHMARK_METHODS.each do |lib_name, methods|
@@ -80,10 +81,6 @@ class DeepMergeBenchmark
         end
       end
     end
-  end
-
-  def extract_results(report)
-    report.entries.map { |entry| [entry.label, entry.ips] }.to_h
   end
 
   def display_results(all_results)
