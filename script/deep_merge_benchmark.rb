@@ -7,7 +7,6 @@ require_relative 'benchmark_hashes'
 
 class DeepMergeBenchmark
   SPEED_RATIO_THRESHOLD = 0.1
-
   BENCHMARK_METHODS = {
     'DeepMerge' => [:dm_deep_merge, :dm_deep_merge!],
     'SinDeepMerge' => [:sin_deep_merge, :sin_deep_merge!],
