@@ -7,7 +7,7 @@ gemspec
 gem 'activesupport'
 gem 'benchmark-ips'
 gem 'deep_merge'
-gem 'json', '~> 2.15.2'
+gem 'json', '~> 2.7.6'
 gem 'minitest'
 gem 'rake'
 gem 'rake-compiler'
