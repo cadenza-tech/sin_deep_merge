@@ -8,7 +8,11 @@ gem 'activesupport'
 gem 'benchmark-ips'
 gem 'deep_merge'
 gem 'json', '~> 2.7.6'
-gem 'minitest'
+if RUBY_ENGINE == 'truffleruby'
+  gem 'minitest', '>= 5.15', '< 5.26'
+else
+  gem 'minitest'
+end
 gem 'rake'
 gem 'rake-compiler'
 gem 'rubocop'
