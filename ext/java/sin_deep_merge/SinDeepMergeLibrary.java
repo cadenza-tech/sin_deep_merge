@@ -37,10 +37,10 @@ public class SinDeepMergeLibrary implements Library {
     private static void deepMergeHashes(ThreadContext context, RubyHash self, RubyHash other, Block block, boolean destructive) {
         for (Object k : other.keySet()) {
             IRubyObject key = (IRubyObject) k;
-            IRubyObject currentVal = self.op_aref(context, key);
-            IRubyObject otherVal = other.op_aref(context, key);
+            IRubyObject currentVal = self.fastARef(key);
+            IRubyObject otherVal = other.fastARef(key);
 
-            if (currentVal.isNil()) {
+            if (currentVal == null) {
                 self.op_aset(context, key, otherVal);
             } else if (currentVal instanceof RubyHash && otherVal instanceof RubyHash) {
                 RubyHash currentHash = (RubyHash) currentVal;
