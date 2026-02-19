@@ -49,6 +49,7 @@ static VALUE deep_merge_hashes(VALUE self, VALUE other, VALUE block, int destruc
 static VALUE hash_deep_merge_bang(int argc, VALUE *argv, VALUE self) {
   VALUE other;
   rb_scan_args(argc, argv, "1", &other);
+  rb_check_frozen(self);
   other = rb_funcall(other, id_to_hash, 0);
   VALUE block = Qnil;
   if (rb_block_given_p()) {
