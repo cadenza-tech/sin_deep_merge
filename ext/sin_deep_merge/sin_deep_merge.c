@@ -28,7 +28,8 @@ static int deep_merge_iter(VALUE key, VALUE other_val, VALUE data) {
     rb_hash_aset(ctx->hash, key, merged);
   } else if (ctx->block_given) {
     VALUE args[3] = {key, current_val, other_val};
-    VALUE result = rb_proc_call(ctx->block, rb_ary_new_from_values(3, args));
+    /* rb_funcallv for TruffleRuby compat (Sulong lacks rb_proc_call_with_block) */
+    VALUE result = rb_funcallv(ctx->block, id_call, 3, args);
     rb_hash_aset(ctx->hash, key, result);
   } else {
     rb_hash_aset(ctx->hash, key, other_val);
@@ -49,7 +50,11 @@ static VALUE deep_merge_hashes(VALUE self, VALUE other, VALUE block, int destruc
 static VALUE hash_deep_merge_bang(int argc, VALUE *argv, VALUE self) {
   VALUE other;
   rb_scan_args(argc, argv, "1", &other);
-  other = rb_funcall(other, id_to_hash, 0);
+  rb_check_frozen(self);
+  if (!RB_TYPE_P(other, T_HASH)) {
+    other = rb_funcall(other, id_to_hash, 0);
+    Check_Type(other, T_HASH);
+  }
   VALUE block = Qnil;
   if (rb_block_given_p()) {
     block = rb_block_proc();
@@ -63,7 +68,10 @@ static VALUE hash_deep_merge_bang(int argc, VALUE *argv, VALUE self) {
 static VALUE hash_deep_merge(int argc, VALUE *argv, VALUE self) {
   VALUE other;
   rb_scan_args(argc, argv, "1", &other);
-  other = rb_funcall(other, id_to_hash, 0);
+  if (!RB_TYPE_P(other, T_HASH)) {
+    other = rb_funcall(other, id_to_hash, 0);
+    Check_Type(other, T_HASH);
+  }
   VALUE block = Qnil;
   if (rb_block_given_p()) {
     block = rb_block_proc();
