@@ -13,7 +13,7 @@ typedef struct {
 static VALUE deep_merge_hashes(VALUE self, VALUE other, VALUE block, int destructive);
 
 static int deep_merge_iter(VALUE key, VALUE other_val, VALUE data) {
-  deep_merge_context *ctx = (deep_merge_context *)data;
+  deep_merge_context* ctx = (deep_merge_context*)data;
   VALUE current_val = rb_hash_lookup2(ctx->hash, key, Qundef);
 
   if (current_val == Qundef) {
@@ -47,7 +47,7 @@ static VALUE deep_merge_hashes(VALUE self, VALUE other, VALUE block, int destruc
   return self;
 }
 
-static VALUE hash_deep_merge_bang(int argc, VALUE *argv, VALUE self) {
+static VALUE hash_deep_merge_bang(int argc, VALUE* argv, VALUE self) {
   VALUE other;
   rb_scan_args(argc, argv, "1", &other);
   rb_check_frozen(self);
@@ -65,7 +65,7 @@ static VALUE hash_deep_merge_bang(int argc, VALUE *argv, VALUE self) {
   return self;
 }
 
-static VALUE hash_deep_merge(int argc, VALUE *argv, VALUE self) {
+static VALUE hash_deep_merge(int argc, VALUE* argv, VALUE self) {
   VALUE other;
   rb_scan_args(argc, argv, "1", &other);
   if (!RB_TYPE_P(other, T_HASH)) {
