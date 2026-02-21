@@ -15,7 +15,8 @@ public class SinDeepMergeLibrary implements Library {
     }
 
     @JRubyMethod(name = "deep_merge", required = 1)
-    public static IRubyObject deepMerge(ThreadContext context, IRubyObject self, IRubyObject other, Block block) {
+    public static IRubyObject deepMerge(
+            ThreadContext context, IRubyObject self, IRubyObject other, Block block) {
         RubyHash selfHash = self.convertToHash();
         RubyHash dupedHash = (RubyHash) selfHash.dup();
         RubyHash otherHash = other.convertToHash();
@@ -24,7 +25,8 @@ public class SinDeepMergeLibrary implements Library {
     }
 
     @JRubyMethod(name = "deep_merge!", required = 1)
-    public static IRubyObject deepMergeBang(ThreadContext context, IRubyObject self, IRubyObject other, Block block) {
+    public static IRubyObject deepMergeBang(
+            ThreadContext context, IRubyObject self, IRubyObject other, Block block) {
         RubyHash selfHash = self.convertToHash();
         if (selfHash.isFrozen()) {
             throw context.runtime.newFrozenError("Hash");
@@ -34,7 +36,12 @@ public class SinDeepMergeLibrary implements Library {
         return selfHash;
     }
 
-    private static void deepMergeHashes(ThreadContext context, RubyHash self, RubyHash other, Block block, boolean destructive) {
+    private static void deepMergeHashes(
+            ThreadContext context,
+            RubyHash self,
+            RubyHash other,
+            Block block,
+            boolean destructive) {
         for (Object k : other.keySet()) {
             IRubyObject key = (IRubyObject) k;
             IRubyObject currentVal = self.fastARef(key);
@@ -51,7 +58,8 @@ public class SinDeepMergeLibrary implements Library {
                 deepMergeHashes(context, currentHash, otherHash, block, destructive);
                 self.op_aset(context, key, currentHash);
             } else if (block.isGiven()) {
-                IRubyObject result = block.call(context, new IRubyObject[] { key, currentVal, otherVal });
+                IRubyObject result =
+                        block.call(context, new IRubyObject[] {key, currentVal, otherVal});
                 self.op_aset(context, key, result);
             } else {
                 self.op_aset(context, key, otherVal);
