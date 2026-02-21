@@ -43,7 +43,8 @@ jobs:
           - 'truffleruby+graalvm-24'
           - 'truffleruby+graalvm-head'
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v6
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -64,7 +65,8 @@ jobs:
           - 'truffleruby-24'
           - 'truffleruby+graalvm-24'
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v6
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -84,7 +86,8 @@ jobs:
           - 'mswin'
           - 'ucrt'
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v6
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
