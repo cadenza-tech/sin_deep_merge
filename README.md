@@ -137,44 +137,10 @@ See [CHANGELOG.md](https://github.com/cadenza-tech/sin_deep_merge/blob/main/CHAN
 
 ### Building for JRuby
 
-To build the Java extension for JRuby support, follow these steps:
-
-1. Start a JRuby Docker container:
+To build the Java extension and run tests for JRuby support:
 
 ```bash
-docker run -it --rm -v "$(pwd):/app" -w /app jruby:9.3.4.0-jdk8 /bin/bash
-```
-
-2. Install necessary dependencies:
-
-```bash
-apt update
-apt upgrade
-apt install git
-```
-
-3. Compile the Java source:
-
-```bash
-cd ext/java
-javac -cp /opt/jruby/lib/jruby.jar sin_deep_merge/SinDeepMergeLibrary.java
-```
-
-4. Create the JAR file:
-
-```bash
-jar cvf ../../lib/sin_deep_merge/sin_deep_merge.jar sin_deep_merge/SinDeepMergeLibrary.class
-```
-
-5. Install dependencies and run linter, tests and benchmarks:
-
-```bash
-cd ../../
-gem install bundler
-bundle install
-bundle exec rake rubocop
-bundle exec rake test
-bundle exec rake benchmark
+./script/jruby_build_and_test.sh
 ```
 
 ## Contributing
