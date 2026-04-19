@@ -157,4 +157,4 @@ Everyone interacting in the SinDeepMerge project's codebases, issue trackers, ch
 
 ## Sponsor
 
-You can sponsor this project on [Patreon](https://patreon.com/CadenzaTech).
+You can sponsor this project on [GitHub Sponsors](https://github.com/sponsors/cadenza-tech).
