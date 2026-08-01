@@ -8,9 +8,10 @@ end
 
 case RUBY_ENGINE
 when 'jruby'
+  require 'jruby'
   require 'sin_deep_merge/sin_deep_merge.jar'
 
-  JRuby::Util.load_ext('sin_deep_merge.SinDeepMergeLibrary')
+  Java::sin_deep_merge::SinDeepMergeLibrary.new.load(JRuby.runtime, false)
 else
   if RUBY_PLATFORM.include?('darwin')
     require 'sin_deep_merge/sin_deep_merge.bundle'
