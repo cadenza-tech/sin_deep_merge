@@ -5,6 +5,7 @@ $LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 require 'minitest/autorun'
 require 'minitest/pride'
 require 'active_support/core_ext/hash/deep_merge'
+require_relative 'ractor_test_helper'
 
 class Hash
   alias_method :as_deep_merge, :deep_merge
