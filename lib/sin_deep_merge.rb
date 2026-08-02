@@ -13,11 +13,8 @@ when 'jruby'
 
   Java::sin_deep_merge::SinDeepMergeLibrary.new.load(JRuby.runtime, false)
 else
-  if RUBY_PLATFORM.include?('darwin')
-    require 'sin_deep_merge/sin_deep_merge.bundle'
-  else
-    require 'sin_deep_merge/sin_deep_merge.so'
-  end
+  # The extension-less require lets Ruby resolve the platform-specific shared library suffix (.bundle on macOS, .so elsewhere) via DLEXT.
+  require 'sin_deep_merge/sin_deep_merge'
 end
 
 require 'sin_deep_merge/version'
