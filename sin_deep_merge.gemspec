@@ -30,13 +30,13 @@ Gem::Specification.new do |spec|
     ls.readlines("\x0").map { |f| f.chomp("\x0") }.reject do |f|
       (f == gemspec) || f.start_with?(
         *%w[bin/ ext/ script/ test/ spec/ features/ .git .github .clang-format .editorconfig .rubocop.yml appveyor CODE_OF_CONDUCT.md Gemfile]
-      ) || Dir['lib/**/*.jar'].include?(f)
+      ) || Dir['lib/sin_deep_merge/*.jar'].include?(f)
     end
   end
 
   if RUBY_ENGINE == 'jruby'
     spec.platform = 'java'
-    spec.files += Dir['lib/**/*.jar'] + Dir['ext/**/*.java']
+    spec.files += Dir['lib/sin_deep_merge/*.jar'] + Dir['ext/**/*.java']
   else
     spec.platform = Gem::Platform::RUBY # rubocop:disable Gemspec/DuplicatedAssignment
     spec.files += ['ext/sin_deep_merge/sin_deep_merge.c', 'ext/sin_deep_merge/extconf.rb']
