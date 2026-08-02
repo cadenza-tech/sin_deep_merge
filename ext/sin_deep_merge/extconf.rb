@@ -2,4 +2,4 @@
 
 require 'mkmf'
 
-create_makefile 'sin_deep_merge'
+create_makefile 'sin_deep_merge/sin_deep_merge'
