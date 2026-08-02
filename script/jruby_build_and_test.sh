@@ -20,10 +20,11 @@ docker run --rm -v "${PROJECT_DIR}:/app" -w /app "${JRUBY_IMAGE}" bash -c '
 
   echo "==> Compiling Java source..."
   cd ext/java
+  rm -f sin_deep_merge/*.class
   javac -cp /opt/jruby/lib/jruby.jar sin_deep_merge/SinDeepMergeLibrary.java
 
   echo "==> Creating JAR file..."
-  jar cvf ../../lib/sin_deep_merge/sin_deep_merge.jar sin_deep_merge/SinDeepMergeLibrary.class
+  jar cvf ../../lib/sin_deep_merge/sin_deep_merge.jar sin_deep_merge/*.class
 
   echo "==> Installing Ruby dependencies..."
   cd ../../
