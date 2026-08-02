@@ -33,6 +33,8 @@ gem install sin_deep_merge
 
 ## Usage
 
+Both methods can be called inside non-main Ractors on CRuby 3.0+.
+
 ### Hash#deep_merge
 
 SinDeepMerge's Hash#deep_merge is compatible with ActiveSupport's Hash#deep_merge.
