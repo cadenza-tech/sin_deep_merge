@@ -95,6 +95,17 @@ class TestDeepMerge < Minitest::Test
     assert_equal(expected, hash1)
   end
 
+  def test_does_not_mutate_nested_hashes_of_self
+    nested = { b: 1 }
+    hash1 = { a: nested }
+    hash2 = { a: { c: 2 } }
+
+    hash1.deep_merge(hash2)
+
+    assert_equal({ b: 1 }, nested)
+    assert_same(nested, hash1[:a])
+  end
+
   def test_with_object_responding_to_to_hash
     other = Object.new
     def other.to_hash

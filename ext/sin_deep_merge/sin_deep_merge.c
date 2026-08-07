@@ -5,11 +5,10 @@ static ID id_call;
 typedef struct {
   VALUE hash;
   VALUE block;
-  int destructive;
   int block_given;
 } deep_merge_context;
 
-static VALUE deep_merge_hashes(VALUE self, VALUE other, VALUE block, int destructive);
+static VALUE deep_merge_hashes(VALUE self, VALUE other, VALUE block);
 
 static int deep_merge_iter(VALUE key, VALUE other_val, VALUE data) {
   deep_merge_context* ctx = (deep_merge_context*)data;
@@ -18,12 +17,8 @@ static int deep_merge_iter(VALUE key, VALUE other_val, VALUE data) {
   if (current_val == Qundef) {
     rb_hash_aset(ctx->hash, key, other_val);
   } else if (RB_TYPE_P(current_val, T_HASH) && RB_TYPE_P(other_val, T_HASH)) {
-    VALUE merged;
-    if (ctx->destructive) {
-      merged = deep_merge_hashes(current_val, other_val, ctx->block, 1);
-    } else {
-      merged = deep_merge_hashes(rb_obj_dup(current_val), other_val, ctx->block, 0);
-    }
+    /* Merge into a copy like ActiveSupport so shared or frozen nested hashes are never mutated. */
+    VALUE merged = deep_merge_hashes(rb_obj_dup(current_val), other_val, ctx->block);
     rb_hash_aset(ctx->hash, key, merged);
   } else if (ctx->block_given) {
     VALUE args[3] = {key, current_val, other_val};
@@ -37,9 +32,9 @@ static int deep_merge_iter(VALUE key, VALUE other_val, VALUE data) {
   return ST_CONTINUE;
 }
 
-static VALUE deep_merge_hashes(VALUE self, VALUE other, VALUE block, int destructive) {
+static VALUE deep_merge_hashes(VALUE self, VALUE other, VALUE block) {
   int block_given = !NIL_P(block);
-  deep_merge_context ctx = {self, block, destructive, block_given};
+  deep_merge_context ctx = {self, block, block_given};
 
   rb_hash_foreach(other, deep_merge_iter, (VALUE)&ctx);
 
@@ -56,7 +51,7 @@ static VALUE hash_deep_merge_bang(int argc, VALUE* argv, VALUE self) {
     block = rb_block_proc();
   }
 
-  deep_merge_hashes(self, other, block, 1);
+  deep_merge_hashes(self, other, block);
 
   return self;
 }
@@ -71,7 +66,7 @@ static VALUE hash_deep_merge(int argc, VALUE* argv, VALUE self) {
   }
 
   VALUE duplicated = rb_obj_dup(self);
-  deep_merge_hashes(duplicated, other, block, 0);
+  deep_merge_hashes(duplicated, other, block);
 
   return duplicated;
 }
