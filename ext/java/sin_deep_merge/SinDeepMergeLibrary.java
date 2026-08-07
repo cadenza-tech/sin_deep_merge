@@ -17,10 +17,9 @@ public class SinDeepMergeLibrary implements Library {
     @JRubyMethod(name = "deep_merge", required = 1)
     public static IRubyObject deepMerge(
             ThreadContext context, IRubyObject self, IRubyObject other, Block block) {
-        RubyHash selfHash = self.convertToHash();
-        RubyHash dupedHash = (RubyHash) selfHash.dup();
         RubyHash otherHash = other.convertToHash();
-        deepMergeHashes(context, dupedHash, otherHash, block, false);
+        RubyHash dupedHash = (RubyHash) self.convertToHash().dup();
+        otherHash.visitAll(context, new DeepMergeVisitor(block), dupedHash);
         return dupedHash;
     }
 
@@ -28,41 +27,42 @@ public class SinDeepMergeLibrary implements Library {
     public static IRubyObject deepMergeBang(
             ThreadContext context, IRubyObject self, IRubyObject other, Block block) {
         RubyHash selfHash = self.convertToHash();
-        if (selfHash.isFrozen()) {
-            throw context.runtime.newFrozenError("Hash");
-        }
+        selfHash.modify();
         RubyHash otherHash = other.convertToHash();
-        deepMergeHashes(context, selfHash, otherHash, block, true);
+        otherHash.visitAll(context, new DeepMergeVisitor(block), selfHash);
         return selfHash;
     }
 
-    private static void deepMergeHashes(
-            ThreadContext context,
-            RubyHash self,
-            RubyHash other,
-            Block block,
-            boolean destructive) {
-        for (Object k : other.keySet()) {
-            IRubyObject key = (IRubyObject) k;
-            IRubyObject currentVal = self.fastARef(key);
-            IRubyObject otherVal = other.fastARef(key);
+    private static class DeepMergeVisitor extends RubyHash.VisitorWithState<RubyHash> {
+        private final Block block;
 
+        DeepMergeVisitor(Block block) {
+            this.block = block;
+        }
+
+        @Override
+        public void visit(
+                ThreadContext context,
+                RubyHash other,
+                IRubyObject key,
+                IRubyObject otherVal,
+                int index,
+                RubyHash target) {
+            IRubyObject currentVal = target.fastARef(key);
             if (currentVal == null) {
-                self.op_aset(context, key, otherVal);
+                target.op_aset(context, key, otherVal);
             } else if (currentVal instanceof RubyHash && otherVal instanceof RubyHash) {
-                RubyHash currentHash = (RubyHash) currentVal;
-                RubyHash otherHash = (RubyHash) otherVal;
-                if (!destructive) {
-                    currentHash = (RubyHash) currentHash.dup();
-                }
-                deepMergeHashes(context, currentHash, otherHash, block, destructive);
-                self.op_aset(context, key, currentHash);
+                // Merge into a copy like ActiveSupport so shared or frozen nested hashes are
+                // never mutated.
+                RubyHash merged = (RubyHash) ((RubyHash) currentVal).dup();
+                ((RubyHash) otherVal).visitAll(context, this, merged);
+                target.op_aset(context, key, merged);
             } else if (block.isGiven()) {
                 IRubyObject result =
                         block.call(context, new IRubyObject[] {key, currentVal, otherVal});
-                self.op_aset(context, key, result);
+                target.op_aset(context, key, result);
             } else {
-                self.op_aset(context, key, otherVal);
+                target.op_aset(context, key, otherVal);
             }
         }
     }

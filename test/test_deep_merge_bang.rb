@@ -96,6 +96,16 @@ class TestDeepMergeBang < Minitest::Test
     assert_equal(expected, hash1)
   end
 
+  def test_string_keys
+    hash1 = { 'a' => 1, 'b' => { 'c' => 2 } }
+    hash2 = { 'b' => { 'd' => 3 }, 'e' => 4 }
+
+    expected = { 'a' => 1, 'b' => { 'c' => 2, 'd' => 3 }, 'e' => 4 }
+
+    assert_equal(expected, hash1.deep_merge!(hash2))
+    assert_equal(expected, hash1)
+  end
+
   def test_frozen_hash
     hash1 = { a: 1 }.freeze
 
