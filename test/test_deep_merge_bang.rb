@@ -151,4 +151,10 @@ class TestDeepMergeBang < Minitest::Test
     assert_equal(expected, hash1.deep_merge!(hash2, &merge_lambda))
     assert_equal(hash1_dup, hash1)
   end
+
+  def test_inside_ractor
+    expected = { a: { b: 1, c: 4, e: 5 }, d: 3, f: 6 }
+
+    assert_equal(expected, in_ractor { { a: { b: 1, c: 2 }, d: 3 }.deep_merge!({ a: { c: 4, e: 5 }, f: 6 }) })
+  end
 end
