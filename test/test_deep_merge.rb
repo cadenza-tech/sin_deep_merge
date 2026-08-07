@@ -49,6 +49,24 @@ class TestDeepMerge < Minitest::Test
     assert_equal(expected, hash1.deep_merge(hash2))
   end
 
+  def test_string_keys
+    hash1 = { 'a' => 1, 'b' => { 'c' => 2 } }
+    hash2 = { 'b' => { 'd' => 3 }, 'e' => 4 }
+
+    expected = { 'a' => 1, 'b' => { 'c' => 2, 'd' => 3 }, 'e' => 4 }
+
+    assert_equal(expected, hash1.deep_merge(hash2))
+  end
+
+  def test_integer_keys
+    hash1 = { 1 => { 2 => 3 } }
+    hash2 = { 1 => { 4 => 5 }, 6 => 7 }
+
+    expected = { 1 => { 2 => 3, 4 => 5 }, 6 => 7 }
+
+    assert_equal(expected, hash1.deep_merge(hash2))
+  end
+
   def test_with_block
     hash1 = { a: 1, b: 2 }
     hash2 = { b: 3, c: 4 }
@@ -84,6 +102,25 @@ class TestDeepMerge < Minitest::Test
     assert_equal(expected, hash1.deep_merge(hash2, &merge_lambda))
   end
 
+  def test_block_control_flow
+    hash1 = { a: 1, b: 2 }
+    hash2 = { a: 10, b: 20 }
+
+    assert_equal(:broke, hash1.deep_merge(hash2) { |_key, _old_val, _new_val| break :broke })
+    assert_equal({ a: 99, b: 99 }, hash1.deep_merge(hash2) { |_key, _old_val, _new_val| next 99 })
+    assert_equal({ a: 1, b: 2 }, hash1)
+  end
+
+  def test_frozen_hash
+    hash1 = { a: { b: 1 } }.freeze
+    hash2 = { a: { c: 2 } }
+
+    merged = hash1.deep_merge(hash2)
+
+    assert_equal({ a: { b: 1, c: 2 } }, merged)
+    refute_predicate(merged, :frozen?)
+  end
+
   def test_non_destructive
     hash1 = { a: { b: 1 } }
     hash2 = { a: { c: 2 } }
@@ -95,24 +132,6 @@ class TestDeepMerge < Minitest::Test
     assert_equal(expected, hash1)
   end
 
-  def test_string_keys
-    hash1 = { 'a' => 1, 'b' => { 'c' => 2 } }
-    hash2 = { 'b' => { 'd' => 3 }, 'e' => 4 }
-
-    expected = { 'a' => 1, 'b' => { 'c' => 2, 'd' => 3 }, 'e' => 4 }
-
-    assert_equal(expected, hash1.deep_merge(hash2))
-  end
-
-  def test_integer_keys
-    hash1 = { 1 => { 2 => 3 } }
-    hash2 = { 1 => { 4 => 5 }, 6 => 7 }
-
-    expected = { 1 => { 2 => 3, 4 => 5 }, 6 => 7 }
-
-    assert_equal(expected, hash1.deep_merge(hash2))
-  end
-
   def test_does_not_mutate_nested_hashes_of_self
     nested = { b: 1 }
     hash1 = { a: nested }
@@ -122,6 +141,18 @@ class TestDeepMerge < Minitest::Test
 
     assert_equal({ b: 1 }, nested)
     assert_same(nested, hash1[:a])
+  end
+
+  def test_preserves_hash_properties
+    hash1 = Hash.new(0)
+    hash1[:a] = 1
+    hash1[:n] = Hash.new { |_hash, key| "gen-#{key}" }
+
+    merged = hash1.deep_merge(b: 2, n: { c: 3 })
+
+    assert_equal(0, merged[:missing])
+    assert_equal('gen-missing', merged[:n][:missing])
+    assert_predicate({}.compare_by_identity.deep_merge(a: 1), :compare_by_identity?)
   end
 
   def test_with_object_responding_to_to_hash
