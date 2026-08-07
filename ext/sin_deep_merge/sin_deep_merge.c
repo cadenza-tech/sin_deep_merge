@@ -43,20 +43,14 @@ static VALUE deep_merge_hashes(VALUE self, VALUE other, int block_given) {
   return self;
 }
 
-static VALUE hash_deep_merge_bang(int argc, VALUE* argv, VALUE self) {
-  VALUE other;
-  rb_scan_args(argc, argv, "1", &other);
+static VALUE hash_deep_merge_bang(VALUE self, VALUE other) {
   rb_check_frozen(self);
   other = rb_convert_type(other, T_HASH, "Hash", "to_hash");
 
-  deep_merge_hashes(self, other, rb_block_given_p());
-
-  return self;
+  return deep_merge_hashes(self, other, rb_block_given_p());
 }
 
-static VALUE hash_deep_merge(int argc, VALUE* argv, VALUE self) {
-  VALUE other;
-  rb_scan_args(argc, argv, "1", &other);
+static VALUE hash_deep_merge(VALUE self, VALUE other) {
   other = rb_convert_type(other, T_HASH, "Hash", "to_hash");
 
   return deep_merge_hashes(rb_obj_dup(self), other, rb_block_given_p());
@@ -72,6 +66,6 @@ void Init_sin_deep_merge(void) {
   rb_ext_ractor_safe(true);
 #endif
 
-  rb_define_method(rb_cHash, "deep_merge", RUBY_METHOD_FUNC(hash_deep_merge), -1);
-  rb_define_method(rb_cHash, "deep_merge!", RUBY_METHOD_FUNC(hash_deep_merge_bang), -1);
+  rb_define_method(rb_cHash, "deep_merge", RUBY_METHOD_FUNC(hash_deep_merge), 1);
+  rb_define_method(rb_cHash, "deep_merge!", RUBY_METHOD_FUNC(hash_deep_merge_bang), 1);
 }
