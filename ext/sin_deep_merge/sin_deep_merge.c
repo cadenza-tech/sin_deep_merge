@@ -1,7 +1,6 @@
 #include <ruby.h>
 
 static ID id_call;
-static ID id_to_hash;
 
 typedef struct {
   VALUE hash;
@@ -51,10 +50,7 @@ static VALUE hash_deep_merge_bang(int argc, VALUE* argv, VALUE self) {
   VALUE other;
   rb_scan_args(argc, argv, "1", &other);
   rb_check_frozen(self);
-  if (!RB_TYPE_P(other, T_HASH)) {
-    other = rb_funcall(other, id_to_hash, 0);
-    Check_Type(other, T_HASH);
-  }
+  other = rb_convert_type(other, T_HASH, "Hash", "to_hash");
   VALUE block = Qnil;
   if (rb_block_given_p()) {
     block = rb_block_proc();
@@ -68,10 +64,7 @@ static VALUE hash_deep_merge_bang(int argc, VALUE* argv, VALUE self) {
 static VALUE hash_deep_merge(int argc, VALUE* argv, VALUE self) {
   VALUE other;
   rb_scan_args(argc, argv, "1", &other);
-  if (!RB_TYPE_P(other, T_HASH)) {
-    other = rb_funcall(other, id_to_hash, 0);
-    Check_Type(other, T_HASH);
-  }
+  other = rb_convert_type(other, T_HASH, "Hash", "to_hash");
   VALUE block = Qnil;
   if (rb_block_given_p()) {
     block = rb_block_proc();
@@ -85,17 +78,16 @@ static VALUE hash_deep_merge(int argc, VALUE* argv, VALUE self) {
 
 void Init_sin_deep_merge(void) {
   /*
-   * Declaring this is a promise, and what backs it is that the only file-scope state is id_call and id_to_hash, written in this function and
-   * read everywhere else, and that every write lands on a hash the calling Ractor owns: deep_merge builds a dup and writes into that, and
-   * rb_check_frozen keeps deep_merge! off a shareable receiver, which is frozen by definition. It has to run before the definitions, because
-   * what it marks is whatever is defined after it.
+   * Declaring this is a promise, and what backs it is that the only file-scope state is id_call, written in this function and read everywhere
+   * else, and that every write lands on a hash the calling Ractor owns: deep_merge builds a dup and writes into that, and rb_check_frozen
+   * keeps deep_merge! off a shareable receiver, which is frozen by definition. It has to run before the definitions, because what it marks is
+   * whatever is defined after it.
    */
 #ifdef HAVE_RB_EXT_RACTOR_SAFE
   rb_ext_ractor_safe(true);
 #endif
 
   id_call = rb_intern("call");
-  id_to_hash = rb_intern("to_hash");
   rb_define_method(rb_cHash, "deep_merge", RUBY_METHOD_FUNC(hash_deep_merge), -1);
   rb_define_method(rb_cHash, "deep_merge!", RUBY_METHOD_FUNC(hash_deep_merge_bang), -1);
 }
