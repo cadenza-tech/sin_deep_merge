@@ -54,6 +54,26 @@ class TestDeepMergeBang < Minitest::Test
     assert_equal(expected, hash1)
   end
 
+  def test_string_keys
+    hash1 = { 'a' => 1, 'b' => { 'c' => 2 } }
+    hash2 = { 'b' => { 'd' => 3 }, 'e' => 4 }
+
+    expected = { 'a' => 1, 'b' => { 'c' => 2, 'd' => 3 }, 'e' => 4 }
+
+    assert_equal(expected, hash1.deep_merge!(hash2))
+    assert_equal(expected, hash1)
+  end
+
+  def test_integer_keys
+    hash1 = { 1 => { 2 => 3 } }
+    hash2 = { 1 => { 4 => 5 }, 6 => 7 }
+
+    expected = { 1 => { 2 => 3, 4 => 5 }, 6 => 7 }
+
+    assert_equal(expected, hash1.deep_merge!(hash2))
+    assert_equal(expected, hash1)
+  end
+
   def test_with_block
     hash1 = { a: 1, b: 2 }
     hash2 = { b: 3, c: 4 }
@@ -93,16 +113,6 @@ class TestDeepMergeBang < Minitest::Test
     expected = { a: 1, b: 5, c: 4 }
 
     assert_equal(expected, hash1.deep_merge!(hash2, &merge_lambda))
-    assert_equal(expected, hash1)
-  end
-
-  def test_string_keys
-    hash1 = { 'a' => 1, 'b' => { 'c' => 2 } }
-    hash2 = { 'b' => { 'd' => 3 }, 'e' => 4 }
-
-    expected = { 'a' => 1, 'b' => { 'c' => 2, 'd' => 3 }, 'e' => 4 }
-
-    assert_equal(expected, hash1.deep_merge!(hash2))
     assert_equal(expected, hash1)
   end
 
