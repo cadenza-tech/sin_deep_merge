@@ -116,6 +116,17 @@ class TestDeepMergeBang < Minitest::Test
     assert_equal(expected, hash1)
   end
 
+  def test_block_control_flow
+    hash1 = { a: 1, b: 2 }
+    hash2 = { a: 10, b: 20 }
+
+    assert_equal(:broke, hash1.deep_merge!(hash2) { |_key, _old_val, _new_val| break :broke })
+    assert_equal({ a: 1, b: 2 }, hash1)
+
+    assert_equal({ a: 99, b: 99 }, hash1.deep_merge!(hash2) { |_key, _old_val, _new_val| next 99 })
+    assert_equal({ a: 99, b: 99 }, hash1)
+  end
+
   def test_frozen_hash
     hash1 = { a: 1 }.freeze
 
@@ -147,6 +158,17 @@ class TestDeepMergeBang < Minitest::Test
     assert_equal({ a: { b: 1, c: 2 } }, hash1)
   end
 
+  def test_preserves_hash_properties
+    hash1 = Hash.new(0)
+    hash1[:a] = 1
+    hash1[:n] = Hash.new { |_hash, key| "gen-#{key}" }
+
+    hash1.deep_merge!(b: 2, n: { c: 3 })
+
+    assert_equal(0, hash1[:missing])
+    assert_equal('gen-missing', hash1[:n][:missing])
+  end
+
   def test_with_object_responding_to_to_hash
     other = Object.new
     def other.to_hash
@@ -159,6 +181,22 @@ class TestDeepMergeBang < Minitest::Test
   def test_with_non_hash_argument
     assert_raises(TypeError) { { a: 1 }.deep_merge!(nil) }
     assert_raises(TypeError) { { a: 1 }.deep_merge!(1) }
+  end
+
+  def test_deeply_nested_hashes_raise_system_stack_error
+    # CRuby 2.4 and older still take the process down on the second overflow, and no other engine compiles the C guard in.
+    skip('CRuby 2.5+ only') unless RUBY_ENGINE == 'ruby' && Gem::Version.new(RUBY_VERSION) >= Gem::Version.new('2.5')
+
+    2.times do
+      hash1 = { a: 1 }
+      hash2 = { a: 1 }
+      100_000.times do
+        hash1 = { n: hash1 }
+        hash2 = { n: hash2 }
+      end
+
+      assert_raises(SystemStackError) { hash1.deep_merge!(hash2) }
+    end
   end
 
   def test_compatibility

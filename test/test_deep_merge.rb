@@ -102,6 +102,25 @@ class TestDeepMerge < Minitest::Test
     assert_equal(expected, hash1.deep_merge(hash2, &merge_lambda))
   end
 
+  def test_block_control_flow
+    hash1 = { a: 1, b: 2 }
+    hash2 = { a: 10, b: 20 }
+
+    assert_equal(:broke, hash1.deep_merge(hash2) { |_key, _old_val, _new_val| break :broke })
+    assert_equal({ a: 99, b: 99 }, hash1.deep_merge(hash2) { |_key, _old_val, _new_val| next 99 })
+    assert_equal({ a: 1, b: 2 }, hash1)
+  end
+
+  def test_frozen_hash
+    hash1 = { a: { b: 1 } }.freeze
+    hash2 = { a: { c: 2 } }
+
+    merged = hash1.deep_merge(hash2)
+
+    assert_equal({ a: { b: 1, c: 2 } }, merged)
+    refute_predicate(merged, :frozen?)
+  end
+
   def test_non_destructive
     hash1 = { a: { b: 1 } }
     hash2 = { a: { c: 2 } }
@@ -122,6 +141,18 @@ class TestDeepMerge < Minitest::Test
 
     assert_equal({ b: 1 }, nested)
     assert_same(nested, hash1[:a])
+  end
+
+  def test_preserves_hash_properties
+    hash1 = Hash.new(0)
+    hash1[:a] = 1
+    hash1[:n] = Hash.new { |_hash, key| "gen-#{key}" }
+
+    merged = hash1.deep_merge(b: 2, n: { c: 3 })
+
+    assert_equal(0, merged[:missing])
+    assert_equal('gen-missing', merged[:n][:missing])
+    assert_predicate({}.compare_by_identity.deep_merge(a: 1), :compare_by_identity?)
   end
 
   def test_with_object_responding_to_to_hash
