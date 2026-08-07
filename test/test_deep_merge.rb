@@ -95,6 +95,49 @@ class TestDeepMerge < Minitest::Test
     assert_equal(expected, hash1)
   end
 
+  def test_string_keys
+    hash1 = { 'a' => 1, 'b' => { 'c' => 2 } }
+    hash2 = { 'b' => { 'd' => 3 }, 'e' => 4 }
+
+    expected = { 'a' => 1, 'b' => { 'c' => 2, 'd' => 3 }, 'e' => 4 }
+
+    assert_equal(expected, hash1.deep_merge(hash2))
+  end
+
+  def test_integer_keys
+    hash1 = { 1 => { 2 => 3 } }
+    hash2 = { 1 => { 4 => 5 }, 6 => 7 }
+
+    expected = { 1 => { 2 => 3, 4 => 5 }, 6 => 7 }
+
+    assert_equal(expected, hash1.deep_merge(hash2))
+  end
+
+  def test_does_not_mutate_nested_hashes_of_self
+    nested = { b: 1 }
+    hash1 = { a: nested }
+    hash2 = { a: { c: 2 } }
+
+    hash1.deep_merge(hash2)
+
+    assert_equal({ b: 1 }, nested)
+    assert_same(nested, hash1[:a])
+  end
+
+  def test_with_object_responding_to_to_hash
+    other = Object.new
+    def other.to_hash
+      { b: 2 }
+    end
+
+    assert_equal({ a: 1, b: 2 }, { a: 1 }.deep_merge(other))
+  end
+
+  def test_with_non_hash_argument
+    assert_raises(TypeError) { { a: 1 }.deep_merge(nil) }
+    assert_raises(TypeError) { { a: 1 }.deep_merge(1) }
+  end
+
   def test_compatibility
     hash1 = { a: 1, b: 2, c: [3, 4], d: { e: 5 }, f: { g: { h: 6, i: 7 } } }
     hash2 = { b: 3, c: [4, 5], d: { f: 6 }, f: { g: { i: 8 } } }

@@ -96,6 +96,61 @@ class TestDeepMergeBang < Minitest::Test
     assert_equal(expected, hash1)
   end
 
+  def test_string_keys
+    hash1 = { 'a' => 1, 'b' => { 'c' => 2 } }
+    hash2 = { 'b' => { 'd' => 3 }, 'e' => 4 }
+
+    expected = { 'a' => 1, 'b' => { 'c' => 2, 'd' => 3 }, 'e' => 4 }
+
+    assert_equal(expected, hash1.deep_merge!(hash2))
+    assert_equal(expected, hash1)
+  end
+
+  def test_frozen_hash
+    hash1 = { a: 1 }.freeze
+
+    if defined?(FrozenError)
+      assert_raises(FrozenError) { hash1.deep_merge!(b: 2) }
+    else
+      assert_raises(RuntimeError) { hash1.deep_merge!(b: 2) }
+    end
+  end
+
+  def test_frozen_nested_hash
+    hash1 = { a: { b: 1 }.freeze }
+    hash2 = { a: { c: 2 } }
+
+    expected = { a: { b: 1, c: 2 } }
+
+    assert_equal(expected, hash1.deep_merge!(hash2))
+    assert_equal(expected, hash1)
+  end
+
+  def test_does_not_mutate_nested_hashes_of_self
+    nested = { b: 1 }
+    hash1 = { a: nested }
+    hash2 = { a: { c: 2 } }
+
+    hash1.deep_merge!(hash2)
+
+    assert_equal({ b: 1 }, nested)
+    assert_equal({ a: { b: 1, c: 2 } }, hash1)
+  end
+
+  def test_with_object_responding_to_to_hash
+    other = Object.new
+    def other.to_hash
+      { b: 2 }
+    end
+
+    assert_equal({ a: 1, b: 2 }, { a: 1 }.deep_merge!(other))
+  end
+
+  def test_with_non_hash_argument
+    assert_raises(TypeError) { { a: 1 }.deep_merge!(nil) }
+    assert_raises(TypeError) { { a: 1 }.deep_merge!(1) }
+  end
+
   def test_compatibility
     hash1 = { a: 1, b: 2, c: [3, 4], d: { e: 5 }, f: { g: { h: 6, i: 7 } } }
     hash1_dup = Marshal.load(Marshal.dump(hash1))

@@ -39,6 +39,8 @@ Both methods can be called inside non-main Ractors on CRuby 3.0+.
 
 SinDeepMerge's Hash#deep_merge is compatible with ActiveSupport's Hash#deep_merge.
 
+Note that SinDeepMerge writes entries directly without invoking subclass overrides such as `[]=` or `update`, so Hash subclasses like `ActiveSupport::HashWithIndifferentAccess` may behave differently than with ActiveSupport.
+
 ```ruby
 require 'sin_deep_merge'
 
@@ -71,7 +73,9 @@ end # => { a: [1, 2, 3, 4], b: 5 }
 
 ### Hash#deep_merge!
 
-Hash#deep_merge! destructively updates self by merging new values directly into it.
+SinDeepMerge's Hash#deep_merge! is compatible with ActiveSupport's Hash#deep_merge!.
+
+Hash#deep_merge! destructively updates self by merging new values into it. Like ActiveSupport, nested hashes are merged into copies, so a nested hash shared with another object or a frozen nested hash is never mutated in place.
 
 ## Benchmark
 
