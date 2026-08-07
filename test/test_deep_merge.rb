@@ -138,6 +138,22 @@ class TestDeepMerge < Minitest::Test
     assert_raises(TypeError) { { a: 1 }.deep_merge(1) }
   end
 
+  def test_deeply_nested_hashes_raise_system_stack_error
+    # CRuby 2.4 and older still take the process down on the second overflow, and no other engine compiles the C guard in.
+    skip('CRuby 2.5+ only') unless RUBY_ENGINE == 'ruby' && Gem::Version.new(RUBY_VERSION) >= Gem::Version.new('2.5')
+
+    2.times do
+      hash1 = { a: 1 }
+      hash2 = { a: 1 }
+      100_000.times do
+        hash1 = { n: hash1 }
+        hash2 = { n: hash2 }
+      end
+
+      assert_raises(SystemStackError) { hash1.deep_merge(hash2) }
+    end
+  end
+
   def test_compatibility
     hash1 = { a: 1, b: 2, c: [3, 4], d: { e: 5 }, f: { g: { h: 6, i: 7 } } }
     hash2 = { b: 3, c: [4, 5], d: { f: 6 }, f: { g: { i: 8 } } }
