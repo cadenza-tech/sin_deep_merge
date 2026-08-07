@@ -1,5 +1,9 @@
 #include <ruby.h>
 
+#if defined(HAVE_RUBY_STACK_CHECK) && defined(HAVE_RB_ESYSSTACKERROR)
+#define DEEP_MERGE_STACK_GUARD
+#endif
+
 static ID id_call;
 
 typedef struct {
@@ -33,6 +37,10 @@ static int deep_merge_iter(VALUE key, VALUE other_val, VALUE data) {
 }
 
 static VALUE deep_merge_hashes(VALUE self, VALUE other, VALUE block) {
+#ifdef DEEP_MERGE_STACK_GUARD
+  /* Raise while stack remains; overflowing the machine stack guard from C recursion can crash the process on a later overflow. */
+  if (ruby_stack_check()) rb_raise(rb_eSysStackError, "stack level too deep");
+#endif
   int block_given = !NIL_P(block);
   deep_merge_context ctx = {self, block, block_given};
 
