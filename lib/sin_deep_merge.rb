@@ -6,6 +6,9 @@ class Hash
   undef_method(:deep_merge!) if method_defined?(:deep_merge!)
 end
 
+# Both extensions look this up by name when they meet a Hash subclass, so it has to be in place before they can be called.
+require 'sin_deep_merge/fallback'
+
 case RUBY_ENGINE
 when 'jruby'
   require 'jruby'

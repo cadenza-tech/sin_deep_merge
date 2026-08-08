@@ -184,8 +184,9 @@ class TestDeepMergeBang < Minitest::Test
   end
 
   def test_deeply_nested_hashes_raise_system_stack_error
-    # CRuby 2.4 and older still take the process down on the second overflow, and no other engine compiles the C guard in.
-    skip('CRuby 2.5+ only') unless RUBY_ENGINE == 'ruby' && Gem::Version.new(RUBY_VERSION) >= Gem::Version.new('2.5')
+    # CRuby 2.4 and older still take the process down on the second overflow, and TruffleRuby crashes inside its own overflow reporting.
+    cruby_25_or_newer = RUBY_ENGINE == 'ruby' && Gem::Version.new(RUBY_VERSION) >= Gem::Version.new('2.5')
+    skip('CRuby 2.5+ and JRuby only') unless cruby_25_or_newer || RUBY_ENGINE == 'jruby'
 
     2.times do
       hash1 = { a: 1 }

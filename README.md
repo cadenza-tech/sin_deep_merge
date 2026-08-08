@@ -39,7 +39,9 @@ Both methods can be called inside non-main Ractors on CRuby 3.0+.
 
 SinDeepMerge's Hash#deep_merge is compatible with ActiveSupport's Hash#deep_merge.
 
-Note that SinDeepMerge writes entries directly without invoking subclass overrides such as `[]=` or `update`, so Hash subclasses like `ActiveSupport::HashWithIndifferentAccess` may behave differently than with ActiveSupport.
+Hash subclasses that override `merge!` or `update`, such as `ActiveSupport::HashWithIndifferentAccess`, are merged through that override, so they behave the same as with ActiveSupport. Such a merge runs in Ruby rather than in the extension, so it is no faster than ActiveSupport.
+
+What SinDeepMerge recurses into is any pair of Hashes, where ActiveSupport asks its `deep_merge?` hook instead. Two cases follow from that: a value that includes `ActiveSupport::DeepMergeable` without being a Hash is replaced rather than merged into, and a Hash subclass that overrides `deep_merge?` to refuse a value is merged into all the same.
 
 ```ruby
 require 'sin_deep_merge'
