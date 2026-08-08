@@ -9,6 +9,21 @@ typedef struct {
   int block_given;
 } deep_merge_context;
 
+/*
+ * Only plain hashes are ever copied here, a subclass being handed to SinDeepMerge::Fallback instead, and a plain hash has no
+ * initialize_copy of its own to run. That leaves rb_obj_dup() dispatching initialize_dup for nothing, which rb_hash_dup() skips.
+ *
+ * Before Ruby 3.3 that shortcut loses compare_by_identity from a hash holding nothing, since the flag lives on a table an empty hash has
+ * yet to allocate. Copying an empty hash costs the same either way, so it goes the general route and the shortcut is left to the rest.
+ */
+static VALUE deep_merge_hash_dup(VALUE hash) {
+#ifdef HAVE_RB_HASH_DUP
+  if (RHASH_SIZE(hash) > 0) return rb_hash_dup(hash);
+#endif
+
+  return rb_obj_dup(hash);
+}
+
 static VALUE deep_merge_hashes(VALUE self, VALUE other, int block_given);
 
 /*
@@ -42,7 +57,7 @@ static int deep_merge_iter(VALUE key, VALUE other_val, VALUE data) {
     if (RB_TYPE_P(current_val, T_HASH) && RB_TYPE_P(other_val, T_HASH)) {
       /* Merge into a copy like ActiveSupport so shared or frozen nested hashes are never mutated. */
       new_val = plain_hash_p(current_val)
-                    ? deep_merge_hashes(rb_obj_dup(current_val), other_val, ctx->block_given)
+                    ? deep_merge_hashes(deep_merge_hash_dup(current_val), other_val, ctx->block_given)
                     /* ActiveSupport recurses as this_val.deep_merge(other_val), so a nested subclass gets its own override too. */
                     : deep_merge_forward(current_val, rb_intern("deep_merge"), 1, &other_val);
     } else if (ctx->block_given) {
@@ -84,7 +99,7 @@ static VALUE hash_deep_merge(VALUE self, VALUE other) {
 
   other = rb_convert_type(other, T_HASH, "Hash", "to_hash");
 
-  return deep_merge_hashes(rb_obj_dup(self), other, rb_block_given_p());
+  return deep_merge_hashes(deep_merge_hash_dup(self), other, rb_block_given_p());
 }
 
 void Init_sin_deep_merge(void) {
