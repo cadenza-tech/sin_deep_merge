@@ -169,6 +169,23 @@ class TestDeepMergeBang < Minitest::Test
     assert_equal('gen-missing', hash1[:n][:missing])
   end
 
+  def test_preserves_compare_by_identity
+    key = +'a'
+    twin = +'a'
+    nested = {}.compare_by_identity
+    nested[key] = 1
+    hash1 = { n: nested, e: {}.compare_by_identity }
+
+    hash1.deep_merge!(n: { b: 2 }, e: { c: 3 })
+
+    # deep_merge! leaves the receiver alone, but a nested hash is still copied, one holding something through rb_hash_dup and an empty one
+    # through rb_obj_dup.
+    assert_predicate(hash1[:n], :compare_by_identity?)
+    assert_predicate(hash1[:e], :compare_by_identity?)
+    # An equal key that is another object has to miss, which is what the flag is for.
+    assert_nil(hash1[:n][twin])
+  end
+
   def test_with_object_responding_to_to_hash
     other = Object.new
     def other.to_hash

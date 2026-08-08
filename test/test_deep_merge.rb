@@ -152,6 +152,26 @@ class TestDeepMerge < Minitest::Test
 
     assert_equal(0, merged[:missing])
     assert_equal('gen-missing', merged[:n][:missing])
+  end
+
+  def test_preserves_compare_by_identity
+    key = +'a'
+    twin = +'a'
+    nested = {}.compare_by_identity
+    nested[key] = 1
+    hash1 = {}.compare_by_identity
+    hash1[key] = 1
+    hash1[:n] = nested
+
+    merged = hash1.deep_merge(n: { b: 2 })
+
+    # A hash holding something is copied through rb_hash_dup, a path an empty one never takes.
+    assert_predicate(merged, :compare_by_identity?)
+    assert_predicate(merged[:n], :compare_by_identity?)
+    # An equal key that is another object has to miss, which is what the flag is for.
+    assert_nil(merged[twin])
+    assert_nil(merged[:n][twin])
+    # An empty hash goes through rb_obj_dup instead, so it needs a guard of its own.
     assert_predicate({}.compare_by_identity.deep_merge(a: 1), :compare_by_identity?)
   end
 
