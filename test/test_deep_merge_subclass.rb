@@ -95,6 +95,26 @@ class TestDeepMergeSubclass < Minitest::Test
     assert_equal(expected, hash1.deep_merge!(hash2) { |_key, old_val, new_val| old_val + new_val })
   end
 
+  # The extensions reach SinDeepMerge::Fallback by looking the constant up by name, which is the one thing on this path that a
+  # non-main Ractor could refuse. The plain Hash tests never take it, so nothing else here would notice.
+  def test_inside_ractor
+    expected = [{ 'a' => { 'b' => 1, 'c' => 2 }, 'd' => 3 }, { 'a' => 1, 'b' => 2 }]
+
+    assert_equal(
+      expected,
+      in_ractor do
+        hash = StringKeyHash.new
+        hash['a'] = StringKeyHash.new
+        hash['a']['b'] = 1
+
+        destructive = StringKeyHash.new
+        destructive['a'] = 1
+
+        [hash.deep_merge(a: { c: 2 }, d: 3), destructive.deep_merge!(b: 2)]
+      end
+    )
+  end
+
   private
 
   def build(pairs)
