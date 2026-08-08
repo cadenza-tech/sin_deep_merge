@@ -4,7 +4,7 @@ module SinDeepMerge
   # ActiveSupport's implementation, kept for Hash subclasses that override merge! or update, ActiveSupport's
   # HashWithIndifferentAccess being the common one. The extensions write straight into the storage of the hash, which skips such an
   # override, so they hand those receivers here instead. dup and merge! are called on the receiver so that its own overrides run.
-  module Fallback
+  module Fallback # :nodoc:
     module_function
 
     def deep_merge(hash, other_hash, &block)
