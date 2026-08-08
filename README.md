@@ -35,6 +35,8 @@ gem install sin_deep_merge
 
 Both methods can be called inside non-main Ractors on CRuby 3.0+.
 
+Requiring ActiveSupport afterwards is safe from 7.1 on, where Hash reaches both methods through `ActiveSupport::DeepMergeable` and a method defined on Hash itself wins over an included module. Up to 7.0 ActiveSupport defines them on Hash directly and replaces these when `active_support/core_ext/hash/deep_merge` is loaded last, so require `sin_deep_merge` after ActiveSupport there. `Hash.instance_method(:deep_merge).source_location` is `nil` while the extension is the one in place.
+
 ### Hash#deep_merge
 
 SinDeepMerge's Hash#deep_merge is compatible with ActiveSupport's Hash#deep_merge.
