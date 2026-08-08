@@ -79,6 +79,8 @@ SinDeepMerge's Hash#deep_merge! is compatible with ActiveSupport's Hash#deep_mer
 
 Hash#deep_merge! destructively updates self by merging new values into it. Like ActiveSupport, nested hashes are merged into copies, so a nested hash shared with another object or a frozen nested hash is never mutated in place.
 
+One case differs: a plain Hash carrying a singleton `merge!` is written into by the extension, so that override never runs, where ActiveSupport reaches it. Hash#deep_merge is not affected, since ActiveSupport merges into a `dup` there, and a `dup` no longer carries the singleton method.
+
 ## Benchmark
 
 SinDeepMerge's Hash#deep_merge is about 6.8-12.0x faster than DeepMerge's Hash#deep_merge and about 2.8-4.8x faster than ActiveSupport's Hash#deep_merge.
