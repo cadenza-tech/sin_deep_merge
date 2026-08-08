@@ -35,6 +35,8 @@ gem install sin_deep_merge
 
 Both methods can be called inside non-main Ractors on CRuby 3.0+.
 
+Requiring ActiveSupport afterwards is safe from 7.1 on, where Hash reaches both methods through `ActiveSupport::DeepMergeable` and a method defined on Hash itself wins over an included module. Up to 7.0 ActiveSupport defines them on Hash directly and replaces these when `active_support/core_ext/hash/deep_merge` is loaded last, so require `sin_deep_merge` after ActiveSupport there. `Hash.instance_method(:deep_merge).source_location` is `nil` while the extension is the one in place.
+
 ### Hash#deep_merge
 
 SinDeepMerge's Hash#deep_merge is compatible with ActiveSupport's Hash#deep_merge.
@@ -78,6 +80,8 @@ end # => { a: [1, 2, 3, 4], b: 5 }
 SinDeepMerge's Hash#deep_merge! is compatible with ActiveSupport's Hash#deep_merge!.
 
 Hash#deep_merge! destructively updates self by merging new values into it. Like ActiveSupport, nested hashes are merged into copies, so a nested hash shared with another object or a frozen nested hash is never mutated in place.
+
+One case differs: a plain Hash carrying a singleton `merge!` is written into by the extension, so that override never runs, where ActiveSupport reaches it. Hash#deep_merge is not affected, since ActiveSupport merges into a `dup` there, and a `dup` no longer carries the singleton method.
 
 ## Benchmark
 
