@@ -18,19 +18,30 @@ public class SinDeepMergeLibrary implements Library {
     public static IRubyObject deepMerge(
             ThreadContext context, IRubyObject self, IRubyObject other, Block block) {
         RubyHash otherHash = other.convertToHash();
-        RubyHash dupedHash = (RubyHash) self.convertToHash().dup();
-        otherHash.visitAll(context, new DeepMergeVisitor(block), dupedHash);
+        RubyHash dupedHash = (RubyHash) ((RubyHash) self).dup();
+        deepMergeInto(context, otherHash, dupedHash, block);
         return dupedHash;
     }
 
     @JRubyMethod(name = "deep_merge!", required = 1)
     public static IRubyObject deepMergeBang(
             ThreadContext context, IRubyObject self, IRubyObject other, Block block) {
-        RubyHash selfHash = self.convertToHash();
+        RubyHash selfHash = (RubyHash) self;
         selfHash.modify();
         RubyHash otherHash = other.convertToHash();
-        otherHash.visitAll(context, new DeepMergeVisitor(block), selfHash);
+        deepMergeInto(context, otherHash, selfHash, block);
         return selfHash;
+    }
+
+    private static void deepMergeInto(
+            ThreadContext context, RubyHash other, RubyHash target, Block block) {
+        try {
+            other.visitAll(context, new DeepMergeVisitor(block), target);
+        } catch (StackOverflowError e) {
+            // Match the C extension, which raises SystemStackError rather than letting the machine
+            // stack overflow escape as is.
+            throw context.runtime.newSystemStackError("stack level too deep", e);
+        }
     }
 
     private static class DeepMergeVisitor extends RubyHash.VisitorWithState<RubyHash> {
