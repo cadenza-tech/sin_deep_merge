@@ -20,6 +20,47 @@ class DeepMergeBenchmark
   # DeepMerge reads its second argument as an options Hash and has no block form, so it would sit in the block tables without doing the
   # work they measure.
   BLOCK_CAPABLE_LIBRARIES = (BENCHMARK_METHODS.keys - ['DeepMerge']).freeze
+  # Sending the method name on each iteration measures the dispatch along with the merge, and it costs whichever library is fastest the
+  # most. These loops name the method outright instead. benchmark-ips enters one of them once per cycle, so the public_send that picks
+  # the loop is paid once per batch rather than once per call.
+  LOOPS = Module.new do
+    BENCHMARK_METHODS.each_value do |method|
+      module_eval(
+        # def self.#{method}(subject, other, times)
+        #   i = 0
+        #   while i < times
+        #     subject.#{method}(other)
+        #     i += 1
+        #   end
+        # end
+        #
+        # def self.#{method}_with_block(subject, other, times, block)
+        #   i = 0
+        #   while i < times
+        #     subject.#{method}(other, &block)
+        #     i += 1
+        #   end
+        # end
+        <<~RUBY, __FILE__, __LINE__ + 1
+          def self.#{method}(subject, other, times)
+            i = 0
+            while i < times
+              subject.#{method}(other)
+              i += 1
+            end
+          end
+
+          def self.#{method}_with_block(subject, other, times, block)
+            i = 0
+            while i < times
+              subject.#{method}(other, &block)
+              i += 1
+            end
+          end
+        RUBY
+      )
+    end
+  end
 
   def self.run
     new.run
@@ -53,13 +94,7 @@ class DeepMergeBenchmark
       BENCHMARK_METHODS.each do |lib_name, method|
         subject, other = fresh_inputs(hash1, hash2)
 
-        x.report("#{lib_name} - deep_merge") do |times|
-          i = 0
-          while i < times
-            subject.send(method, other)
-            i += 1
-          end
-        end
+        x.report("#{lib_name} - deep_merge") { |times| LOOPS.public_send(method, subject, other, times) }
       end
     end
   end
@@ -73,11 +108,7 @@ class DeepMergeBenchmark
         subject, other = fresh_inputs(hash1, hash2)
 
         x.report("#{lib_name} - deep_merge (#{block_name})") do |times|
-          i = 0
-          while i < times
-            subject.send(method, other, &block)
-            i += 1
-          end
+          LOOPS.public_send(:"#{method}_with_block", subject, other, times, block)
         end
       end
     end
