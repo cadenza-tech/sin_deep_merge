@@ -8,6 +8,9 @@ require_relative 'benchmark_hashes'
 class DeepMergeBenchmark
   WARMUP_SECONDS = 5
   TIME_SECONDS = 5
+  # Above this the ratios move from one run to the next, so the table is not one to copy into the README. Every row prints its own error
+  # either way, but reading each of them is the check that gets skipped.
+  ERROR_PERCENTAGE_THRESHOLD = 5.0
   # Each of these leaves the hash it was called on alone, so every iteration of a timed loop repeats the work of the first. DeepMerge is
   # absent because it has no such method: its deep_merge writes into the receiver and returns it, the same as its deep_merge!.
   NON_DESTRUCTIVE_METHODS = {
@@ -179,7 +182,16 @@ class DeepMergeBenchmark
     all_results.each do |test_name, results|
       table = create_result_table(test_name, results)
       puts "\n#{table}"
+      warn_about_noise(test_name, results)
     end
+  end
+
+  def warn_about_noise(test_name, results)
+    noisy = results.select { |_label, value| value[:error] > ERROR_PERCENTAGE_THRESHOLD }.sort_by { |_label, value| -value[:error] }
+    return if noisy.empty?
+
+    puts "Warning: #{test_name} was measured above ±#{ERROR_PERCENTAGE_THRESHOLD}%, so its ratios are not steady enough to publish:"
+    noisy.each { |label, value| puts "  #{label} ±#{format('%.2f', value[:error])}%" }
   end
 
   def create_result_table(test_name, results)
