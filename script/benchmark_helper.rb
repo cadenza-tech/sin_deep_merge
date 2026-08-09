@@ -25,11 +25,15 @@ end
 require 'active_support/core_ext/hash/deep_merge'
 
 class Hash
-  def scratch_deep_merge(other_hash)
+  # Takes a block like the libraries it is measured against do, so that the block benchmarks give it the same work to do.
+  def scratch_deep_merge(other_hash, &block)
     merged = dup
     other_hash.each do |key, value|
-      if merged[key].is_a?(Hash) && value.is_a?(Hash)
-        merged[key] = merged[key].scratch_deep_merge(value)
+      current_value = merged[key]
+      if current_value.is_a?(Hash) && value.is_a?(Hash)
+        merged[key] = current_value.scratch_deep_merge(value, &block)
+      elsif block && merged.key?(key)
+        merged[key] = yield(key, current_value, value)
       else
         merged[key] = value
       end
