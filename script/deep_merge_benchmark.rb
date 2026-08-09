@@ -8,35 +8,36 @@ require_relative 'benchmark_hashes'
 class DeepMergeBenchmark
   WARMUP_SECONDS = 5
   TIME_SECONDS = 5
-  # Only the non-destructive method of each library. Measuring deep_merge! alongside it needs a pristine receiver per call, which no
-  # amount of setup can provide from inside a timed loop, and benchmark-ips keeps one entry per label, so the two would collide anyway.
-  BENCHMARK_METHODS = {
-    'DeepMerge' => :dm_deep_merge,
+  # Each of these leaves the hash it was called on alone, so every iteration of a timed loop repeats the work of the first. DeepMerge is
+  # absent because it has no such method: its deep_merge writes into the receiver and returns it, the same as its deep_merge!.
+  NON_DESTRUCTIVE_METHODS = {
     'SinDeepMerge' => :sin_deep_merge,
     'ActiveSupport' => :deep_merge,
     'Scratch' => :scratch_deep_merge
   }.freeze
-  # DeepMerge reads its second argument as an options Hash and has no block form, so it would sit in the block tables without doing the
-  # work they measure.
-  BLOCK_CAPABLE_LIBRARIES = (BENCHMARK_METHODS.keys - ['DeepMerge']).freeze
+  # The one table DeepMerge belongs in. DeepMerge's own deep_merge is not the entry here: it leaves an existing value alone where the
+  # other two overwrite it, so on these inputs it would walk the hash without writing anything. Every row here merges into a receiver
+  # that already carries the merge from the second iteration on. These inputs keep their shape once merged, so that costs little, but an
+  # input that grew the receiver would flatter each library by a different amount. Read these ratios as the rough comparison they are
+  # rather than as the measurement the tables above give.
+  DESTRUCTIVE_METHODS = {
+    'DeepMerge' => :dm_deep_merge!,
+    'SinDeepMerge' => :sin_deep_merge!,
+    'ActiveSupport' => :deep_merge!
+  }.freeze
+  # One input carries the destructive table, since that limitation is the same whichever hashes go into it.
+  DESTRUCTIVE_BENCHMARK = 'Deep Recursion'
+  ALL_METHODS = (NON_DESTRUCTIVE_METHODS.values + DESTRUCTIVE_METHODS.values).freeze
   # Sending the method name on each iteration measures the dispatch along with the merge, and it costs whichever library is fastest the
   # most. These loops name the method outright instead. benchmark-ips enters one of them once per cycle, so the public_send that picks
   # the loop is paid once per batch rather than once per call.
   LOOPS = Module.new do
-    BENCHMARK_METHODS.each_value do |method|
+    ALL_METHODS.each do |method|
       module_eval(
         # def self.#{method}(subject, other, times)
         #   i = 0
         #   while i < times
         #     subject.#{method}(other)
-        #     i += 1
-        #   end
-        # end
-        #
-        # def self.#{method}_with_block(subject, other, times, block)
-        #   i = 0
-        #   while i < times
-        #     subject.#{method}(other, &block)
         #     i += 1
         #   end
         # end
@@ -48,7 +49,21 @@ class DeepMergeBenchmark
               i += 1
             end
           end
+        RUBY
+      )
+    end
 
+    # Only the non-destructive tables take a block, which is just as well: a name ending in ! could not carry the suffix.
+    NON_DESTRUCTIVE_METHODS.each_value do |method|
+      module_eval(
+        # def self.#{method}_with_block(subject, other, times, block)
+        #   i = 0
+        #   while i < times
+        #     subject.#{method}(other, &block)
+        #     i += 1
+        #   end
+        # end
+        <<~RUBY, __FILE__, __LINE__ + 1
           def self.#{method}_with_block(subject, other, times, block)
             i = 0
             while i < times
@@ -72,6 +87,10 @@ class DeepMergeBenchmark
   private
 
   def run_benchmarks
+    non_destructive_results.merge(destructive_results)
+  end
+
+  def non_destructive_results
     BENCHMARKS.each_with_object({}) do |(name, hashes), results|
       puts "Benchmarking: #{name}..."
 
@@ -82,22 +101,31 @@ class DeepMergeBenchmark
         report = run_benchmark(hash1, hash2)
       end
 
-      results[name] = report.entries.map { |entry| [entry.label, measurement(entry)] }.to_h
+      results[name] = measurements(report)
     end
   end
 
-  def measurement(entry)
-    { ips: entry.ips, error: entry.error_percentage }
+  def destructive_results
+    name = "#{DESTRUCTIVE_BENCHMARK} In Place"
+    puts "Benchmarking: #{name}..."
+
+    hash1, hash2 = BENCHMARKS.fetch(DESTRUCTIVE_BENCHMARK)
+
+    { name => measurements(run_benchmark(hash1, hash2, DESTRUCTIVE_METHODS)) }
   end
 
-  def run_benchmark(hash1, hash2)
+  def measurements(report)
+    report.entries.map { |entry| [entry.label, { ips: entry.ips, error: entry.error_percentage }] }.to_h
+  end
+
+  def run_benchmark(hash1, hash2, methods = NON_DESTRUCTIVE_METHODS)
     Benchmark.ips do |x|
       configure(x)
 
-      BENCHMARK_METHODS.each do |lib_name, method|
+      methods.each do |lib_name, method|
         subject, other = fresh_inputs(hash1, hash2)
 
-        x.report("#{lib_name} - deep_merge") { |times| LOOPS.public_send(method, subject, other, times) }
+        x.report(label(lib_name, method)) { |times| LOOPS.public_send(method, subject, other, times) }
       end
     end
   end
@@ -106,15 +134,22 @@ class DeepMergeBenchmark
     Benchmark.ips do |x|
       configure(x)
 
-      BLOCK_CAPABLE_LIBRARIES.each do |lib_name|
-        method = BENCHMARK_METHODS[lib_name]
+      NON_DESTRUCTIVE_METHODS.each do |lib_name, method|
         subject, other = fresh_inputs(hash1, hash2)
 
-        x.report("#{lib_name} - deep_merge (#{block_name})") do |times|
+        x.report(label(lib_name, method, block_name)) do |times|
           LOOPS.public_send(:"#{method}_with_block", subject, other, times, block)
         end
       end
     end
+  end
+
+  # The name the library exposes rather than the alias the benchmark reaches it by, so each row reads as the method a reader would call.
+  def label(lib_name, method, block_name = nil)
+    public_name = method.to_s.sub(/\A(?:dm|sin|scratch)_/, '')
+    return "#{lib_name} - #{public_name}" unless block_name
+
+    "#{lib_name} - #{public_name} (#{block_name})"
   end
 
   def configure(job)
@@ -123,9 +158,9 @@ class DeepMergeBenchmark
     job.quiet = true
   end
 
-  # DeepMerge merges into the receiver even from its non-destructive method, so each report starts from a copy of its own rather than
-  # from whatever the report before it left behind. Within its own report it does still merge into its own result from the second
-  # iteration on, which nothing outside the timed loop can undo.
+  # The destructive methods write into their receiver, so each report starts from a copy of its own rather than from whatever the report
+  # before it left behind. Within its own report it does still merge into that same receiver from the second iteration on, which nothing
+  # outside the timed loop can undo.
   def fresh_inputs(hash1, hash2)
     [deep_copy(hash1), deep_copy(hash2)]
   end
