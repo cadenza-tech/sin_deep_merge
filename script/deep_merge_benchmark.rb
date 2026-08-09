@@ -7,56 +7,57 @@ require_relative 'benchmark_hashes'
 
 class DeepMergeBenchmark
   SPEED_RATIO_THRESHOLD = 0.1
+  WARMUP_SECONDS = 5
+  TIME_SECONDS = 5
+  # Only the non-destructive method of each library. Measuring deep_merge! alongside it needs a pristine receiver per call, which no
+  # amount of setup can provide from inside a timed loop, and benchmark-ips keeps one entry per label, so the two would collide anyway.
   BENCHMARK_METHODS = {
-    'DeepMerge' => [:dm_deep_merge, :dm_deep_merge!],
-    'SinDeepMerge' => [:sin_deep_merge, :sin_deep_merge!],
-    'ActiveSupport' => [:deep_merge, :deep_merge!],
-    'Scratch' => [:scratch_deep_merge]
+    'DeepMerge' => :dm_deep_merge,
+    'SinDeepMerge' => :sin_deep_merge,
+    'ActiveSupport' => :deep_merge,
+    'Scratch' => :scratch_deep_merge
   }.freeze
+  # DeepMerge reads its second argument as an options Hash and has no block form, so it would sit in the block tables without doing the
+  # work they measure.
+  BLOCK_CAPABLE_LIBRARIES = (BENCHMARK_METHODS.keys - ['DeepMerge']).freeze
 
   def self.run
     new.run
   end
 
   def run
-    results = run_benchmarks
-    display_results(results)
+    display_results(run_benchmarks)
   end
 
   private
 
   def run_benchmarks
-    results = {}
-
-    BENCHMARKS.each do |name, hashes|
+    BENCHMARKS.each_with_object({}) do |(name, hashes), results|
       puts "Benchmarking: #{name}..."
 
-      if hashes.length < 3
-        report = run_benchmark(hashes[0], hashes[1])
+      hash1, hash2, block = hashes
+      if block
+        report = run_benchmark_with_block(hash1, hash2, block, name)
       else
-        report = run_benchmark_with_block(hashes[0], hashes[1], hashes[2], name)
+        report = run_benchmark(hash1, hash2)
       end
 
       results[name] = report.entries.map { |entry| [entry.label, entry.ips] }.to_h
     end
-
-    results
   end
 
   def run_benchmark(hash1, hash2)
     Benchmark.ips do |x|
-      x.time = 5
-      x.warmup = 5
-      x.quiet = true
+      configure(x)
 
-      BENCHMARK_METHODS.each do |lib_name, methods|
-        methods.each do |method|
-          x.report("#{lib_name} - deep_merge") do |times|
-            i = 0
-            while i < times
-              hash1.send(method, hash2)
-              i += 1
-            end
+      BENCHMARK_METHODS.each do |lib_name, method|
+        subject, other = fresh_inputs(hash1, hash2)
+
+        x.report("#{lib_name} - deep_merge") do |times|
+          i = 0
+          while i < times
+            subject.send(method, other)
+            i += 1
           end
         end
       end
@@ -65,21 +66,43 @@ class DeepMergeBenchmark
 
   def run_benchmark_with_block(hash1, hash2, block, block_name)
     Benchmark.ips do |x|
-      x.time = 1
-      x.warmup = 0.5
-      x.quiet = true
+      configure(x)
 
-      BENCHMARK_METHODS.each do |lib_name, methods|
-        methods.each do |method|
-          x.report("#{lib_name} - deep_merge (#{block_name})") do |times|
-            i = 0
-            while i < times
-              hash1.send(method, hash2, &block)
-              i += 1
-            end
+      BLOCK_CAPABLE_LIBRARIES.each do |lib_name|
+        method = BENCHMARK_METHODS[lib_name]
+        subject, other = fresh_inputs(hash1, hash2)
+
+        x.report("#{lib_name} - deep_merge (#{block_name})") do |times|
+          i = 0
+          while i < times
+            subject.send(method, other, &block)
+            i += 1
           end
         end
       end
+    end
+  end
+
+  def configure(job)
+    job.warmup = WARMUP_SECONDS
+    job.time = TIME_SECONDS
+    job.quiet = true
+  end
+
+  # DeepMerge merges into the receiver even from its non-destructive method, so each report starts from a copy of its own rather than
+  # from whatever the report before it left behind. Within its own report it does still merge into its own result from the second
+  # iteration on, which nothing outside the timed loop can undo.
+  def fresh_inputs(hash1, hash2)
+    [deep_copy(hash1), deep_copy(hash2)]
+  end
+
+  # Arrays are copied too, since deep_merge writes into the one it finds on the receiver, and a report that shared it with the report
+  # before would merge into a list that is already twice as long.
+  def deep_copy(value)
+    case value
+    when Hash then value.each_with_object({}) { |(key, nested), copy| copy[key] = deep_copy(nested) }
+    when Array then value.map { |nested| deep_copy(nested) }
+    else value
     end
   end
 
@@ -101,9 +124,7 @@ class DeepMergeBenchmark
   def format_result_rows(results)
     sorted_results = results.sort_by { |_key, value| value }.reverse
     fastest_speed = sorted_results.first[1]
-    sorted_results.map do |key, value|
-      [key.sub(/(dm|sin|scratch)_/, ''), format('%.1f', value), calculate_speed_ratio(fastest_speed, value)]
-    end
+    sorted_results.map { |key, value| [key, format('%.1f', value), calculate_speed_ratio(fastest_speed, value)] }
   end
 
   def calculate_speed_ratio(fastest_speed, current_speed)
