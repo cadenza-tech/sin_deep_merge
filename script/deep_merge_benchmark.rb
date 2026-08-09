@@ -205,20 +205,30 @@ class DeepMergeBenchmark
   def format_result_rows(results)
     sorted_results = results.sort_by { |_key, value| value[:ips] }.reverse
     fastest = sorted_results.first[1]
-    sorted_results.map do |key, value|
-      [key, format('%.1f', value[:ips]), format('±%.2f%%', value[:error]), calculate_speed_ratio(fastest, value)]
+    # Rows run fastest first, so the tie is the run from the top that ends at the first row the error cannot explain away. Asking each
+    # row on its own instead would let a noisy row further down read as a tie and print Fastest under a row already marked slower,
+    # which reads as an unsorted table.
+    tied = sorted_results.take_while { |_key, value| indistinguishable?(fastest, value) }.length
+
+    sorted_results.each_with_index.map do |(key, value), index|
+      [key, format('%.1f', value[:ips]), format('±%.2f%%', value[:error]), speed_ratio(fastest, value, index < tied)]
     end
+  end
+
+  def speed_ratio(fastest, current, tied)
+    return 'Fastest' if tied
+
+    "#{(fastest[:ips] / current[:ips]).round(1)}x slower"
   end
 
   # Two entries are indistinguishable when the noise both were measured with leaves them unseparated. The flat 10% this replaces was a
   # guess that took no account of how steady either measurement actually was.
-  def calculate_speed_ratio(fastest, current)
-    speed_ratio = (fastest[:ips] / current[:ips]).round(1)
+  def indistinguishable?(fastest, current)
     # A ratio that rounds to 1.0 reads as slower while saying the two ran at the same speed, so it is a tie on its own terms. It also
     # answers the fastest row, whose zero gap does not fall inside a zero-width band.
-    return 'Fastest' if speed_ratio <= 1.0 || overlapping_error_bands?(fastest, current)
+    return true if (fastest[:ips] / current[:ips]).round(1) <= 1.0
 
-    "#{speed_ratio}x slower"
+    overlapping_error_bands?(fastest, current)
   end
 
   # The bands are compared as iterations rather than as the two percentages, which are each a share of a different mean: adding them
