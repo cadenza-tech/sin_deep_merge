@@ -10,7 +10,7 @@ on:
       - 'lib/**/*'
       - '**/*.rb'
   schedule:
-    - cron: '30 0 * * 5'
+    - cron: '30 1 * * 5'
   workflow_call:
 permissions:
   contents: read
